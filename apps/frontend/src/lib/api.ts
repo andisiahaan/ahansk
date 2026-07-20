@@ -1,0 +1,68 @@
+import axios from 'axios';
+
+// ─── Centralized API client ────────────────────────────────────────────────────
+// All auth is cookie-based (httpOnly). No manual token management needed here.
+// withCredentials ensures cookies are sent on every request automatically.
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10001',
+  withCredentials: true,
+});
+
+// ─── Response: auto-refresh on 401 ────────────────────────────────────────────
+let isRefreshing = false;
+let waitQueue: Array<() => void> = [];
+
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const original = err.config as typeof err.config & { _retry?: boolean };
+    if (err.response?.status !== 401 || original._retry) return Promise.reject(err);
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        waitQueue.push(() => resolve(api(original)));
+      });
+    }
+
+    original._retry = true;
+    isRefreshing = true;
+
+    try {
+      await api.post('/auth/refresh');
+      waitQueue.forEach((cb) => cb());
+      waitQueue = [];
+      return api(original);
+    } catch {
+      waitQueue = [];
+      if (typeof window !== 'undefined') window.location.href = '/login';
+      return Promise.reject(err);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
+
+export default api;
+
+// ─── Server Component Fetch Utility ─────────────────────────────────────────────
+export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  let cookieString = '';
+  if (typeof window === 'undefined') {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    cookieString = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join('; ');
+  }
+
+  const url = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10001'}${endpoint}`;
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...(cookieString ? { cookie: cookieString } : {}),
+    },
+  });
+}

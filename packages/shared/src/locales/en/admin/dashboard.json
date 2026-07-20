@@ -1,0 +1,20 @@
+{
+  "title": "Dashboard",
+  "stats": {
+    "totalUsers": "Total Users",
+    "newToday": "New Today",
+    "totalPosts": "Total Posts",
+    "publishedPosts": "Published",
+    "totalPages": "Total Pages",
+    "apiStatus": "API Status"
+  },
+  "recentActivity": "Recent Activity",
+  "quickLinks": {
+    "title": "Quick Links",
+    "manageUsers": "Manage Users",
+    "manageBlog": "Manage Blog",
+    "managePages": "Manage Pages",
+    "appSettings": "App Settings",
+    "online": "Online"
+  }
+}

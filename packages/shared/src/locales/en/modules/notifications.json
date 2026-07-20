@@ -1,0 +1,44 @@
+{
+  "categories": {
+    "account": "Account Security",
+    "blog": "Blog Updates",
+    "news": "News & Announcements",
+    "ticket": "Support Tickets",
+    "system": "System",
+    "admin": "Admin Alerts"
+  },
+  "channels": {
+    "database": "In-App",
+    "email": "Email",
+    "push": "Browser Push"
+  },
+  "channelDescriptions": {
+    "database": "Receive notifications inside the app",
+    "email": "Receive notifications via email",
+    "push": "Receive notifications in your browser"
+  },
+  "types": {
+    "account_login_alert": "New login detected",
+    "account_password_changed": "Password changed",
+    "account_email_changed": "Email address changed",
+    "account_2fa_enabled": "Two-factor authentication enabled",
+    "account_2fa_disabled": "Two-factor authentication disabled",
+    "blog_post_published": "New blog post published",
+    "news_published": "New announcement",
+    "news_maintenance": "Scheduled maintenance",
+    "ticket_created": "Support ticket created",
+    "ticket_replied": "Reply on your support ticket",
+    "ticket_status_changed": "Support ticket status changed",
+    "ticket_closed": "Support ticket closed",
+    "system_announcement": "System announcement"
+  },
+  "securityCriticalLabel": "Security (always on)",
+  "markAllRead": "Mark all as read",
+  "noNotifications": "No notifications yet",
+  "preferences": {
+    "title": "Notification Preferences",
+    "channelSection": "Delivery Channels",
+    "typeSection": "Notification Types",
+    "saved": "Preferences saved"
+  }
+}

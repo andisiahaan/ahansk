@@ -1,0 +1,43 @@
+{
+  "list": { "title": "Users", "subtitle": "Manage all registered users.", "total": "total" },
+  "fields": { "name": "Name", "email": "Email", "role": "Role", "status": "Status", "joined": "Joined", "verified": "Verified", "actions": "Actions", "id": "ID" },
+  "actions": { "ban": "Ban user", "activate": "Activate", "resetPassword": "Reset password", "view": "View", "delete": "Delete", "enable": "Enable", "disable": "Disable" },
+  "roles": { "ADMIN": "Admin", "USER": "User" },
+  "details": {
+    "title": "User Details",
+    "back": "Back",
+    "profile": "Profile",
+    "banManagement": "Ban Management",
+    "banned": "BANNED",
+    "reason": "Reason",
+    "expires": "Expires",
+    "permanent": "Permanent",
+    "liftBan": "Lift Ban (Unban)",
+    "banUser": "Ban User",
+    "banReason": "Ban Reason",
+    "banReasonPlaceholder": "e.g. Violation of TOS",
+    "banExpires": "Expires At (Leave blank for permanent)",
+    "banning": "Banning...",
+    "confirmLift": "Are you sure you want to lift the ban on this user?",
+    "confirmDelete": "Delete this user permanently?"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "messages": {
+    "loadFailed": "Failed to load users.",
+    "userNotFound": "User not found.",
+    "updateFailed": "Failed to update user.",
+    "deleteFailed": "Failed to delete user.",
+    "deleted": "User deleted.",
+    "disabled": "User disabled.",
+    "enabled": "User enabled.",
+    "banSuccess": "User banned successfully.",
+    "banFailed": "Failed to ban user.",
+    "unbanSuccess": "User unbanned successfully.",
+    "unbanFailed": "Failed to unban user."
+  }
+}

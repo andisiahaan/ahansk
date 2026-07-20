@@ -1,0 +1,5 @@
+{
+  "list": { "title": "Blog Posts", "subtitle": "Manage blog content." },
+  "create": { "title": "New Post", "submit": "Publish Post" },
+  "edit": { "title": "Edit Post", "submit": "Save Changes" }
+}

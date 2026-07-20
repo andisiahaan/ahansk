@@ -1,0 +1,6 @@
+{
+  "list": { "title": "News & Announcements", "subtitle": "Manage news and announcements." },
+  "create": { "title": "New Item", "submit": "Publish" },
+  "edit": { "title": "Edit Item" },
+  "fields": { "title": "Title", "type": "Type", "published": "Published", "pinned": "Pinned", "expiresAt": "Expires at" }
+}

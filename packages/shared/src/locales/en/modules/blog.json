@@ -1,0 +1,16 @@
+{
+  "fields": {
+    "title": "Title",
+    "slug": "Slug",
+    "content": "Content",
+    "excerpt": "Excerpt",
+    "category": "Category",
+    "tags": "Tags",
+    "author": "Author",
+    "status": "Status",
+    "publishedAt": "Published at",
+    "createdAt": "Created",
+    "updatedAt": "Last updated",
+    "coverImage": "Cover image"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "title": "Settings",
+  "sections": { "general": "General", "auth": "Authentication", "email": "Email", "storage": "Storage" },
+  "actions": { "save": "Save settings", "saved": "Settings saved." }
+}

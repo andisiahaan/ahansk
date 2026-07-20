@@ -1,0 +1,13 @@
+{
+  "title": "Help Center",
+  "categories": "Categories",
+  "articles": "Articles",
+  "newCategory": "New Category",
+  "newArticle": "New Article",
+  "editCategory": "Edit Category",
+  "editArticle": "Edit Article",
+  "deleteCategory": "Delete Category",
+  "deleteArticle": "Delete Article",
+  "noCategories": "No categories found.",
+  "noArticles": "No articles found."
+}

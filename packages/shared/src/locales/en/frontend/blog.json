@@ -1,0 +1,15 @@
+{
+  "list": {
+    "heading": "Blog",
+    "description": "Articles, updates, and insights.",
+    "readMore": "Read more",
+    "noPosts": "No posts published yet.",
+    "minuteRead": "{count} min read"
+  },
+  "post": {
+    "by": "By {author}",
+    "postedOn": "Posted on {date}",
+    "backToBlog": "← Back to blog",
+    "sharePost": "Share this post"
+  }
+}

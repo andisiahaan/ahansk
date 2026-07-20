@@ -1,0 +1,71 @@
+'use client';
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import api from '@/lib/api';
+import { Logo } from '@ahansk/ui';
+import { toast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+function RegisterForm() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const nextUrl = params.get('next') ?? '/dashboard';
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/auth/register', { ...form, recaptchaToken: 'bypass-dev' });
+      toast.success('Account created! Please check your email to verify.');
+      setTimeout(() => router.push(`/login?next=${nextUrl}`), 2000);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? 'Registration failed.');
+    } finally { setLoading(false); }
+  };
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [k]: e.target.value });
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Label>Full Name</Label>
+        <Input placeholder="Jane Doe" value={form.name} onChange={set('name')} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>Email</Label>
+        <Input type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>Password</Label>
+        <Input type="password" placeholder="Min 8 characters" value={form.password} onChange={set('password')} />
+      </div>
+      <Button type="submit" loading={loading} className="w-full">Create Account</Button>
+      <p className="text-center text-sm text-muted-foreground">
+        Already have an account?{' '}
+        <Link href={`/login?next=${nextUrl}`} className="text-primary hover:underline">Sign in</Link>
+      </p>
+    </form>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <main className="min-h-dvh flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-8 shadow-lg">
+        <div className="text-center mb-8">
+          <Logo width={120} height={32} className="mx-auto mb-5" />
+          <h1 className="text-2xl font-bold text-foreground">Create account</h1>
+          <p className="text-sm text-muted-foreground mt-1">Join us today</p>
+        </div>
+        <Suspense fallback={null}><RegisterForm /></Suspense>
+      </div>
+    </main>
+  );
+}

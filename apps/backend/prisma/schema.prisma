@@ -1,0 +1,486 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum UserActivityType {
+  LOGIN
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum NewsType {
+  ANNOUNCEMENT
+  UPDATE
+  MAINTENANCE
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─── User & Auth ─────────────────────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique @default(uuid())
+  password          String?
+  name              String
+  phone             String?
+  role              Role      @default(USER)
+  avatar            String?
+  is_active         Boolean   @default(true)
+  email_verified_at DateTime?
+
+  failed_login_attempts Int       @default(0)
+  locked_until          DateTime?
+
+  totp_secret      String?  @db.VarChar(255)
+  totp_enabled     Boolean  @default(false)
+  totp_verified_at DateTime?
+
+  oauth_accounts            OAuthAccount[]
+  refresh_tokens            RefreshToken[]
+  totp_recovery_codes       TotpRecoveryCode[]
+  password_reset_tokens     PasswordResetToken[]
+  email_verification_tokens EmailVerificationToken[]
+  activities                UserActivity[]
+  personal_access_tokens    PersonalAccessToken[]
+  blog_posts                BlogPost[]
+  news_items                NewsItem[]
+  tickets                   Ticket[]       @relation("UserTickets")
+  assigned_tickets          Ticket[]       @relation("AssignedTickets")
+  ticket_replies            TicketReply[]
+  notifications             Notification[]
+  push_subscriptions        PushSubscription[]
+  otps                      Otp[]
+  pending_email_changes     PendingEmailChange[]
+  bans                      UserBan[]      @relation("BannedUser")
+  bans_issued               UserBan[]      @relation("BannedBy")
+  unbans_issued             UserBan[]      @relation("UnbannedBy")
+
+  preferences Json?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([username])
+  @@map("users")
+}
+
+model OAuthAccount {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  provider    String
+  provider_id String
+  created_at  DateTime @default(now())
+
+  @@unique([provider, provider_id])
+  @@index([user_id])
+  @@map("oauth_accounts")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid())
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  token_hash  String    @unique
+  user_agent  String?
+  ip_address  String?
+  expires_at  DateTime
+  revoked_at  DateTime?
+  replaced_by String?
+
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@map("refresh_tokens")
+}
+
+model TotpRecoveryCode {
+  id         String    @id @default(uuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  code_hash  String
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("totp_recovery_codes")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(uuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  token_hash String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(uuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  token_hash String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("email_verification_tokens")
+}
+
+model UserActivity {
+  id         String           @id @default(uuid())
+  user_id    String?
+  user       User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  type       UserActivityType
+  email      String
+  success    Boolean
+  ip_address String?
+  user_agent String?
+  reason     String?
+  metadata   Json?
+
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([email])
+  @@map("user_activities")
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+model Setting {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  settings   Json
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ─── Pages ────────────────────────────────────────────────────────────────────
+
+model Page {
+  id               String    @id @default(uuid())
+  slug             String    @unique
+  title            String
+  content          String    @db.LongText
+  meta_description String?
+  is_published     Boolean   @default(false)
+  published_at     DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@map("pages")
+}
+
+// ─── Personal Access Tokens ───────────────────────────────────────────────────
+
+model PersonalAccessToken {
+  id           String    @id @default(uuid())
+  user_id      String
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  name         String
+  token_hash   String    @unique
+  token_prefix String    @db.VarChar(12)
+  last_used_at DateTime?
+  expires_at   DateTime?
+  revoked_at   DateTime?
+  created_at   DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("personal_access_tokens")
+}
+
+// ─── Blog ─────────────────────────────────────────────────────────────────────
+
+model BlogCategory {
+  id          String         @id @default(uuid())
+  name        String
+  slug        String         @unique
+  description String?        @db.Text
+  cover_image String?
+  parent_id   String?
+  parent      BlogCategory?  @relation("CategoryTree", fields: [parent_id], references: [id], onDelete: SetNull)
+  children    BlogCategory[] @relation("CategoryTree")
+  order       Int            @default(0)
+  is_active   Boolean        @default(true)
+  posts       BlogPost[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([parent_id])
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id    String     @id @default(uuid())
+  name  String
+  slug  String     @unique
+  posts BlogPost[]
+
+  @@map("blog_tags")
+}
+
+model BlogPost {
+  id               String       @id @default(uuid())
+  title            String
+  slug             String       @unique
+  excerpt          String?      @db.Text
+  content          String       @db.LongText
+  cover_image      String?
+  status           BlogStatus   @default(DRAFT)
+  published_at     DateTime?
+  is_featured      Boolean      @default(false)
+  allow_comments   Boolean      @default(true)
+  meta_title       String?
+  meta_description String?
+  meta_keywords    String?
+  view_count       Int          @default(0)
+  author_id        String
+  author           User         @relation(fields: [author_id], references: [id], onDelete: Restrict)
+  categories       BlogCategory[]
+  tags             BlogTag[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([author_id])
+  @@index([status])
+  @@map("blog_posts")
+}
+
+// ─── News ─────────────────────────────────────────────────────────────────────
+
+model NewsItem {
+  id           String    @id @default(uuid())
+  title        String
+  slug         String    @unique
+  content      String    @db.LongText
+  type         NewsType  @default(ANNOUNCEMENT)
+  is_published Boolean   @default(false)
+  is_pinned    Boolean   @default(false)
+  published_at DateTime?
+  expires_at   DateTime?
+  author_id    String
+  author       User      @relation(fields: [author_id], references: [id], onDelete: Restrict)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([author_id])
+  @@index([type, is_published])
+  @@map("news_items")
+}
+
+// ─── Tickets ──────────────────────────────────────────────────────────────────
+
+model Ticket {
+  id            String         @id @default(uuid())
+  ticket_number String         @unique
+  subject       String
+  description   String         @db.Text
+  category      String?
+  priority      TicketPriority @default(MEDIUM)
+  status        TicketStatus   @default(OPEN)
+  closed_at     DateTime?
+  user_id       String
+  user          User           @relation("UserTickets", fields: [user_id], references: [id], onDelete: Cascade)
+  assigned_to   String?
+  assignee      User?          @relation("AssignedTickets", fields: [assigned_to], references: [id], onDelete: SetNull)
+  replies       TicketReply[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([assigned_to])
+  @@index([status])
+  @@map("tickets")
+}
+
+model TicketReply {
+  id             String   @id @default(uuid())
+  ticket_id      String
+  ticket         Ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user_id        String
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  message        String   @db.Text
+  is_staff_reply Boolean  @default(false)
+  attachments    Json     @default("[]")
+  created_at     DateTime @default(now())
+
+  @@index([ticket_id])
+  @@index([user_id])
+  @@map("ticket_replies")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id       String @id @default(uuid())
+  user_id  String
+  user     User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  type     String // e.g. "ticket.replied"
+  category String // e.g. "ticket" — derived prefix
+
+  title    String
+  message  String @db.Text
+  data     Json?  // metadata: ticket_id, post_id, url, dll
+
+  is_read  Boolean   @default(false)
+  read_at  DateTime?
+
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([user_id, is_read])
+  @@index([created_at])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id         String @id @default(uuid())
+  user_id    String
+  user       User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  endpoint   String @db.Text
+  p256dh     String @db.Text
+  auth       String
+  user_agent String?
+
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@map("push_subscriptions")
+}
+
+// ─── OTP ──────────────────────────────────────────────────────────────────────
+
+model Otp {
+  id         String   @id @default(uuid())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  purpose    String   // 'email_change', 'phone_change', 'action_confirm', dll
+  identifier String?  // context data: new_email, phone, reference_id, dll
+  code_hash  String   // SHA-256 dari 6-digit code
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([user_id, purpose])
+  @@index([user_id, purpose, expires_at])
+  @@map("otps")
+}
+
+// ─── Pending Email Change ─────────────────────────────────────────────────────
+
+model PendingEmailChange {
+  id         String   @id @default(uuid())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  new_email  String
+  token_hash String   @unique // SHA-256 dari random 32 bytes
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@map("pending_email_changes")
+}
+
+// ─── User Bans ────────────────────────────────────────────────────────────────
+
+model UserBan {
+  id          String    @id @default(uuid())
+  user_id     String
+  user        User      @relation("BannedUser", fields: [user_id], references: [id], onDelete: Cascade)
+  banned_by   String
+  admin       User      @relation("BannedBy", fields: [banned_by], references: [id])
+  reason      String    @db.Text
+  expires_at  DateTime? // null = permanent
+  unbanned_at DateTime?
+  unbanned_by String?
+  unban_admin User?     @relation("UnbannedBy", fields: [unbanned_by], references: [id])
+  created_at  DateTime  @default(now())
+
+  @@index([user_id])
+  @@index([user_id, unbanned_at])
+  @@map("user_bans")
+}
+
+// ─── Help Center ──────────────────────────────────────────────────────────────
+
+model HelpCategory {
+  id           String        @id @default(uuid())
+  slug         String        @unique
+  title        String
+  description  String?
+  icon         String?       // emoji atau icon name
+  sort_order   Int           @default(0)
+  is_published Boolean       @default(true)
+  articles     HelpArticle[]
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  @@map("help_categories")
+}
+
+model HelpArticle {
+  id               String       @id @default(uuid())
+  category_id      String
+  category         HelpCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  slug             String       @unique
+  title            String
+  content          String       @db.LongText
+  meta_description String?
+  helpful_yes      Int          @default(0)
+  helpful_no       Int          @default(0)
+  sort_order       Int          @default(0)
+  is_published     Boolean      @default(false)
+  published_at     DateTime?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  @@index([category_id])
+  @@index([is_published])
+  @@map("help_articles")
+}

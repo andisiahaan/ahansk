@@ -1,0 +1,9 @@
+{
+  "dashboard": "Dashboard",
+  "blog": "Blog",
+  "users": "Users",
+  "news": "News",
+  "settings": "Settings",
+  "logout": "Logout",
+  "profile": "My Profile"
+}

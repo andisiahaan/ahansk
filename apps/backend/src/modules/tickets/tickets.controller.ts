@@ -1,0 +1,52 @@
+import { Controller, Get, Post, Patch, Param, Body, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { TicketsService } from './tickets.service';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreateTicketSchema, CreateReplySchema } from './tickets.dto';
+import type { CreateTicketDto, CreateReplyDto } from './tickets.dto';
+import type { AuthUser } from '@ahansk/shared';
+import type { UploadedFile as StorageFile } from '../../infrastructure/storage/storage.service';
+
+@Controller('tickets')
+export class TicketsController {
+  constructor(private readonly svc: TicketsService) {}
+
+  @Get()
+  list(
+    @CurrentUser() user: AuthUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.svc.listForUser(user.id, Number(page) || 1, Number(limit) || 20);
+  }
+
+  @Get(':id')
+  get(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.svc.getById(id, user.id, false);
+  }
+
+  @Post()
+  create(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(CreateTicketSchema)) dto: CreateTicketDto,
+  ) {
+    return this.svc.create(dto, user.id);
+  }
+
+  @Post(':id/reply')
+  @UseInterceptors(FilesInterceptor('attachments', 5))
+  reply(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(CreateReplySchema)) dto: CreateReplyDto,
+    @UploadedFiles() files?: Express.Multer.File[],
+  ) {
+    return this.svc.addReply(id, dto, user.id, false, files as unknown as StorageFile[]);
+  }
+
+  @Patch(':id/close')
+  close(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.svc.close(id, user.id);
+  }
+}
