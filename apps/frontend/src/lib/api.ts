@@ -4,7 +4,7 @@ import axios from 'axios';
 // All auth is cookie-based (httpOnly). No manual token management needed here.
 // withCredentials ensures cookies are sent on every request automatically.
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10311',
   withCredentials: true,
 });
 
@@ -56,7 +56,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
       .join('; ');
   }
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10001'}${endpoint}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10311'}${endpoint}`;
 
   return fetch(url, {
     ...options,

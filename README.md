@@ -9,9 +9,9 @@ Starter Kit Monorepo skala menengah ke atas berbasis **NestJS**, **Next.js App R
 ```
 ahansk/
 ├── apps/
-│   ├── backend/    → NestJS API Server (Port 10001)
-│   ├── frontend/   → Next.js User-Facing App Router (Port 10002)
-│   └── admin/      → Next.js Admin Panel Dashboard (Port 10003)
+│   ├── backend/    → NestJS API Server (Port 10311)
+│   ├── frontend/   → Next.js User-Facing App Router (Port 10312)
+│   └── admin/      → Next.js Admin Panel Dashboard (Port 10313)
 ├── packages/
 │   ├── shared/     → Zod schemas, types, constants, i18n locales registry, pagination utils
 │   └── ui/         → Shared UI Components & assets (Logo, favicon, shadcn tokens)
@@ -86,9 +86,9 @@ pnpm run db:seed
 pnpm run dev
 ```
 Setelah server berjalan, layanan akan dapat diakses pada:
-- **Backend API**: http://localhost:10001 (`GET /` untuk cek status health)
-- **Frontend App**: http://localhost:10002
-- **Admin Dashboard**: http://localhost:10003
+- **Backend API**: http://localhost:10311 (`GET /` untuk cek status health)
+- **Frontend App**: http://localhost:10312
+- **Admin Dashboard**: http://localhost:10313
 
 ---
 

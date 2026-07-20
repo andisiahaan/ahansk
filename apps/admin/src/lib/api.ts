@@ -3,7 +3,7 @@ import axios from 'axios';
 // ─── Centralized API client ────────────────────────────────────────────────────
 // Auth is cookie-based (httpOnly). withCredentials ensures cookies are sent.
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:10311',
   withCredentials: true,
 });
 

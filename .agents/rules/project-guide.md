@@ -37,9 +37,9 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 
 ```
 apps/
-  backend/    → NestJS (port 10001)
-  frontend/   → Next.js user-facing (port 10002)
-  admin/      → Next.js admin panel (port 10003)
+  backend/    → NestJS (port 10311)
+  frontend/   → Next.js user-facing (port 10312)
+  admin/      → Next.js admin panel (port 10313)
 packages/
   shared/     → Zod schemas, types, constants, i18n localeRegistry, pagination utils
   ui/         → Komponen & asset shared antar Next.js apps (Logo, favicon)

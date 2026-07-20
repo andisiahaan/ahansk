@@ -38,7 +38,7 @@ export default function HomePage() {
         {[
           { icon: '🔐', title: 'Auth System', desc: 'JWT, Google OAuth, 2FA TOTP' },
           { icon: '⚡', title: 'Edge Ready', desc: 'Next.js App Router with RSC' },
-          { icon: '🎨', title: 'Admin Panel', desc: 'Full CRUD at port 10003' },
+          { icon: '🎨', title: 'Admin Panel', desc: 'Full CRUD at port 10313' },
           { icon: '🌍', title: 'i18n Ready', desc: 'Translate to any language' },
         ].map((f) => (
           <div key={f.title} className="glass" style={{ padding: '1.25rem', textAlign: 'center' }}>
