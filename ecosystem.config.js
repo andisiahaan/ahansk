@@ -18,7 +18,7 @@ module.exports = {
       name:               'ahansk-backend',
       cwd:                './apps/backend',
       script:             'dist/main.js',
-      instances:          'max',
+      instances:          '1',
       exec_mode:          'cluster',
       max_memory_restart: '512M',
       env_production: {
