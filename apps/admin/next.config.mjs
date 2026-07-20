@@ -4,6 +4,9 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const config = {
+  // Kosongkan untuk deployment subdomain (admin.domain.com)
+  // Isi "/admin" untuk path-based single domain (domain.com/admin)
+  basePath: process.env.NEXT_BASE_PATH || '',
   transpilePackages: ['@ahansk/ui', '@ahansk/shared'],
   images: {
     remotePatterns: [
