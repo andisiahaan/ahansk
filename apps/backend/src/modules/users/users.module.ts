@@ -6,9 +6,11 @@ import { UsersRepository } from './users.repository';
 import { BanService } from './ban.service';
 import { BanRepository } from './ban.repository';
 import { DISK_CONFIGS } from '../../config/filesystem';
+import { NotificationModule } from '../notifications/notification.module';
 
 @Module({
   imports: [
+    NotificationModule,
     MulterModule.register({
       storage: undefined, // use memory storage — StorageService handles persistence
       limits: { fileSize: DISK_CONFIGS.avatar.maxSizeBytes },
