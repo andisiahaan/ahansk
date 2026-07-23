@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -34,7 +35,8 @@ const COOKIE_DEFAULTS = {
 
 @Injectable()
 export class AuthService {
-  private readonly googleClient: OAuth2Client;
+  private readonly googleClientId: string;
+  private readonly googleClient: OAuth2Client | null;
 
   constructor(
     private readonly repo: AuthRepository,
@@ -47,7 +49,8 @@ export class AuthService {
     private readonly otp: OtpService,
     private readonly banService: BanService,
   ) {
-    this.googleClient = new OAuth2Client(config.get('app.google.clientId'));
+    this.googleClientId = config.get<string>('app.google.clientId', '');
+    this.googleClient = this.googleClientId ? new OAuth2Client(this.googleClientId) : null;
   }
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -141,10 +144,13 @@ export class AuthService {
     return this.issueTokens(user.id, res, ip, ua);
   }
 
-  // ─── Google Auth ──────────────────────────────────────────────────────────
+  // ─── Google Auth ───────────────────────────────────────────────────────────────
 
   async googleAuth(dto: GoogleAuthDto, res: Response, ip?: string, ua?: string) {
-    const ticket = await this.googleClient.verifyIdToken({ idToken: dto.credential, audience: this.config.get('app.google.clientId') }).catch(() => { throw new UnauthorizedException(messages.auth.googleTokenInvalid); });
+    if (!this.googleClient) {
+      throw new ServiceUnavailableException('Google Login is not configured on this server.');
+    }
+    const ticket = await this.googleClient.verifyIdToken({ idToken: dto.credential, audience: this.googleClientId }).catch(() => { throw new UnauthorizedException(messages.auth.googleTokenInvalid); });
     const payload = ticket.getPayload();
     if (!payload?.sub || !payload.email) throw new UnauthorizedException(messages.auth.googleTokenInvalid);
 

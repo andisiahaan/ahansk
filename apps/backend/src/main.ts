@@ -38,8 +38,8 @@ async function bootstrap(): Promise<void> {
 
   // ─── Start ──────────────────────────────────────────────────────────────────
   const port = parseInt(process.env.PORT ?? '10311', 10);
-  await app.listen(port);
-  logger.log(`🚀 Backend running on http://localhost:${port}`, 'Bootstrap');
+  await app.listen(port, '0.0.0.0');
+  logger.log(`🚀 Backend running on http://0.0.0.0:${port}`, 'Bootstrap');
 }
 
 bootstrap();

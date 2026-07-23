@@ -17,11 +17,11 @@ export const envSchema = z.object({
   // ─── Redis ────────────────────────────────────────────────────────────────
   REDIS_URL: z.string().url(),
 
-  // ─── Google ───────────────────────────────────────────────────────────────
-  GOOGLE_CLIENT_ID: z.string().min(1),
+  // ─── Google (opsional — kosong = Google Login tidak tersedia) ──────────────
+  GOOGLE_CLIENT_ID: z.string().default(''),
 
-  // ─── reCAPTCHA ────────────────────────────────────────────────────────────
-  RECAPTCHA_SECRET_KEY: z.string().min(1),
+  // ─── reCAPTCHA (opsional — kosong = captcha dinonaktifkan) ───────────────
+  RECAPTCHA_SECRET_KEY: z.string().default(''),
 
   // ─── CORS ─────────────────────────────────────────────────────────────────
   FRONTEND_URL: z.string().url(),
