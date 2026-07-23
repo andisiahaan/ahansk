@@ -14,7 +14,7 @@ export interface NotificationEmailJob {
   name:    string;
 }
 
-@Processor('notification:email')
+@Processor('notification-email')
 export class NotificationEmailProcessor extends WorkerHost {
   private readonly logger      = new Logger(NotificationEmailProcessor.name);
   private readonly transporter: nodemailer.Transporter;

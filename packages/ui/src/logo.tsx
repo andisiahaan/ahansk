@@ -24,8 +24,9 @@ export function Logo({
   alt = 'Logo',
   className,
 }: LogoProps) {
-  const src = frontendUrl
-    ? `${frontendUrl.replace(/\/$/, '')}/logo.png`
+  const baseUrl = frontendUrl || process.env.NEXT_PUBLIC_FRONTEND_URL || '';
+  const src = baseUrl
+    ? `${baseUrl.replace(/\/$/, '')}/logo.png`
     : '/logo.png';
 
   return (

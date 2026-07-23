@@ -33,9 +33,9 @@ module.exports = {
     {
       name:               'ahansk-frontend',
       cwd:                './apps/frontend',
-      script:             'node_modules/.bin/next',
+      script:             'node_modules/next/dist/bin/next',
       args:               'start',
-      interpreter:        'none',
+      interpreter:        'node',
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
@@ -49,9 +49,9 @@ module.exports = {
     {
       name:               'ahansk-admin',
       cwd:                './apps/admin',
-      script:             'node_modules/.bin/next',
+      script:             'node_modules/next/dist/bin/next',
       args:               'start',
-      interpreter:        'none',
+      interpreter:        'node',
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',

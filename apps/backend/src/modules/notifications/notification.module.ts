@@ -12,8 +12,8 @@ import { NotificationPushProcessor } from './channels/notification-push.processo
   imports: [
     PrismaModule,
     BullModule.registerQueue(
-      { name: 'notification:email' },
-      { name: 'notification:push' },
+      { name: 'notification-email' },
+      { name: 'notification-push' },
     ),
   ],
   providers: [

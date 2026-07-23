@@ -12,7 +12,7 @@ export interface NotificationPushJob {
   url?:    string;
 }
 
-@Processor('notification:push')
+@Processor('notification-push')
 export class NotificationPushProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationPushProcessor.name);
 
@@ -21,11 +21,17 @@ export class NotificationPushProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
   ) {
     super();
-    webpush.setVapidDetails(
-      `mailto:${this.config.get<string>('app.vapid.contactEmail')}`,
-      this.config.get<string>('app.vapid.publicKey')  ?? '',
-      this.config.get<string>('app.vapid.privateKey') ?? '',
-    );
+    const publicKey = this.config.get<string>('app.vapid.publicKey');
+    const privateKey = this.config.get<string>('app.vapid.privateKey');
+    const contactEmail = this.config.get<string>('app.vapid.contactEmail');
+
+    if (publicKey && privateKey && contactEmail) {
+      webpush.setVapidDetails(
+        `mailto:${contactEmail}`,
+        publicKey,
+        privateKey,
+      );
+    }
   }
 
   async process(job: Job<NotificationPushJob>): Promise<void> {

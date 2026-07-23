@@ -36,8 +36,8 @@ export class NotificationService {
   constructor(
     private readonly repo: NotificationRepository,
     private readonly config: ConfigService,
-    @InjectQueue('notification:email') private readonly emailQueue: Queue,
-    @InjectQueue('notification:push')  private readonly pushQueue:  Queue,
+    @InjectQueue('notification-email') private readonly emailQueue: Queue,
+    @InjectQueue('notification-push')  private readonly pushQueue:  Queue,
   ) {}
 
   // ─── Core Send ─────────────────────────────────────────────────────────────

@@ -54,13 +54,13 @@ async function seedSettings() {
 async function seedUsers() {
   log('\n👤 Users');
 
-  const adminPw = await hash('admin123!');
-  const userPw  = await hash('user1234!');
+  const adminPw = await hash('ahandev');
+  const userPw  = await hash('ahandev');
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
+    where: { email: 'admin@ahandev.com' },
     create: {
-      email: 'admin@example.com',
+      email: 'admin@ahandev.com',
       password: adminPw,
       name: 'Super Admin',
       role: 'ADMIN',
@@ -72,12 +72,12 @@ async function seedUsers() {
       email_verified_at: new Date(),
     },
   });
-  log(`  ✅ admin@example.com  (role: ADMIN, pw: admin123!)`);
+  log(`  ✅ admin@ahandev.com  (role: ADMIN, pw: ahandev)`);
 
   const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
+    where: { email: 'user@ahandev.com' },
     create: {
-      email: 'user@example.com',
+      email: 'user@ahandev.com',
       password: userPw,
       name: 'John Doe',
       role: 'USER',
@@ -86,7 +86,7 @@ async function seedUsers() {
     },
     update: {},
   });
-  log(`  ✅ user@example.com   (role: USER, pw: user1234!)`);
+  log(`  ✅ user@example.com   (role: USER, pw: ahandev)`);
 
   return { admin, user };
 }

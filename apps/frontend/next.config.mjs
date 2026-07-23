@@ -1,11 +1,9 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 
-const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+const withNextIntl = createNextIntlPlugin();
 
 /** @type {import('next').NextConfig} */
 const config = {
-  // Kosongkan untuk deployment subdomain/root domain (domain.com)
-  // Isi prefix jika diletakkan di sub-path tertentu
   basePath: process.env.NEXT_BASE_PATH || '',
   transpilePackages: ['@ahansk/ui', '@ahansk/shared'],
   images: {
@@ -15,6 +13,20 @@ const config = {
     ],
     unoptimized: process.env.NODE_ENV !== 'production',
   },
+  turbopack: {
+    resolveAlias: {
+      'next-intl/config': './src/i18n/request.ts',
+    }
+  }
 };
 
-export default withNextIntl(config);
+const nextConfig = withNextIntl(config);
+
+if (nextConfig.experimental && nextConfig.experimental.turbo) {
+  delete nextConfig.experimental.turbo;
+  if (Object.keys(nextConfig.experimental).length === 0) {
+    delete nextConfig.experimental;
+  }
+}
+
+export default nextConfig;
