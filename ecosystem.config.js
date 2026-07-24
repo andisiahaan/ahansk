@@ -9,6 +9,13 @@
  *   Save on reboot: pm2 save && pm2 startup
  */
 
+const dotenv = require('dotenv');
+
+// Load environment variables for each app explicitly
+const backendEnv = dotenv.config({ path: './apps/backend/.env' }).parsed || {};
+const frontendEnv = dotenv.config({ path: './apps/frontend/.env' }).parsed || {};
+const adminEnv = dotenv.config({ path: './apps/admin/.env' }).parsed || {};
+
 module.exports = {
   apps: [
     // ─────────────────────────────────────────────────────────────
@@ -23,7 +30,7 @@ module.exports = {
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
-        PORT:     10311,
+        PORT: backendEnv.PORT || 10311,
       },
     },
 
@@ -39,7 +46,7 @@ module.exports = {
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
-        PORT:     10312,
+        PORT: frontendEnv.PORT || 10312,
       },
     },
 
@@ -55,7 +62,7 @@ module.exports = {
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
-        PORT:     10313,
+        PORT: adminEnv.PORT || 10313,
       },
     },
   ],
