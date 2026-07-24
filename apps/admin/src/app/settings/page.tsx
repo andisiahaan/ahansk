@@ -2,19 +2,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '@/lib/api';
 import { SETTING_KEYS } from '@ahansk/shared';
-import type { AuthSettings, AppGeneralSettings, MailSettings } from '@ahansk/shared';
+import type { AuthSettings, AppGeneralSettings } from '@ahansk/shared';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/cn';
 
-type AnySettings = AuthSettings | AppGeneralSettings | MailSettings | Record<string, unknown>;
+type AnySettings = AuthSettings | AppGeneralSettings | Record<string, unknown>;
 
 const TABS = [
   { key: SETTING_KEYS.APP, label: 'General' },
   { key: SETTING_KEYS.AUTH, label: 'Auth' },
-  { key: SETTING_KEYS.MAIL, label: 'Mail' },
 ];
 
 export default function SettingsPage() {
@@ -60,7 +59,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-5xl mx-auto w-full">
       <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
 
       <div className="flex gap-1 mb-6 border-b border-border pb-3">

@@ -22,7 +22,8 @@ export default registerAs('app', () => {
       port: env.SMTP_PORT,
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
-      from: env.SMTP_FROM,
+      fromName: env.SMTP_FROM_NAME,
+      fromAddress: env.SMTP_FROM_ADDRESS,
     },
     vapid: {
       publicKey:    env.VAPID_PUBLIC_KEY,

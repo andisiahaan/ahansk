@@ -1,4 +1,3 @@
-import Image from 'next/image';
 
 interface LogoProps {
   /** URL of the frontend root — logo.png is always at {frontendUrl}/logo.png */
@@ -22,7 +21,7 @@ export function Logo({
   width = 140,
   height = 36,
   alt = 'Logo',
-  className,
+  className = '',
 }: LogoProps) {
   const baseUrl = frontendUrl || process.env.NEXT_PUBLIC_FRONTEND_URL || '';
   const src = baseUrl
@@ -30,13 +29,11 @@ export function Logo({
     : '/logo.png';
 
   return (
-    <Image
+    <img
       src={src}
       alt={alt}
-      width={width}
-      height={height}
-      className={className}
-      priority
+      style={{ height, width: 'auto', maxWidth: width || '100%' }}
+      className={`object-contain ${className}`.trim()}
     />
   );
 }

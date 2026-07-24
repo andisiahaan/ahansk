@@ -58,15 +58,27 @@ export default function NewsPage() {
 
   const f = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((p) => ({ ...p, [k]: e.target.value }));
 
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    setForm((p) => {
+      // If we are creating a new item, auto-generate slug from title
+      if (editing === 'new') {
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        return { ...p, title, slug };
+      }
+      return { ...p, title };
+    });
+  };
+
   if (editing !== null) return (
-    <div className="max-w-3xl">
+    <div className="max-w-6xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">{editing === 'new' ? 'New News Item' : 'Edit News Item'}</h1>
         <Button variant="outline" size="sm" onClick={() => { setEditing(null); setForm(EMPTY); }}>← Back</Button>
       </div>
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5"><Label>Title</Label><Input value={form.title} onChange={f('title')} /></div>
+          <div className="flex flex-col gap-1.5"><Label>Title</Label><Input value={form.title} onChange={handleTitleChange} /></div>
           <div className="flex flex-col gap-1.5"><Label>Slug</Label><Input value={form.slug} onChange={f('slug')} /></div>
         </div>
         <div className="flex flex-col gap-1.5">
@@ -93,7 +105,11 @@ export default function NewsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">News</h1>
-        <Button onClick={() => { setForm(EMPTY); setEditing('new'); }}>+ New Item</Button>
+        <Button onClick={() => { 
+          const now = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+          setForm({ ...EMPTY, published_at: now, is_published: true }); 
+          setEditing('new'); 
+        }}>+ New Item</Button>
       </div>
       <div className="border border-border rounded-xl overflow-hidden overflow-x-auto">
         <table className="w-full border-collapse min-w-[580px]">

@@ -24,7 +24,7 @@ export default function BlogPostsPage() {
     setLoading(true);
     try {
       const { data } = await api.get('/admin/blog/posts', { params: { limit: 50, ...(status ? { status } : {}) } });
-      setPosts(data.data?.posts ?? []);
+      setPosts(data.data?.items ?? data.data?.posts ?? (Array.isArray(data.data) ? data.data : []));
     } catch { toast.error('Failed to load posts.'); }
     finally { setLoading(false); }
   }, [status]);

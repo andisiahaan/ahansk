@@ -41,7 +41,7 @@ export class EmailProcessor extends WorkerHost {
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
     const link = `${frontendUrl}/auth/verify-email?token=${token}`;
     await this.transporter.sendMail({
-      from: this.config.get<string>('app.smtp.from'),
+      from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
       subject: 'Verify your email address',
       html: `<p>Hello ${name},</p><p>Please verify your email by clicking <a href="${link}">here</a>.</p><p>This link expires in 24 hours.</p>`,
@@ -52,7 +52,7 @@ export class EmailProcessor extends WorkerHost {
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
     const link = `${frontendUrl}/auth/reset-password?token=${token}`;
     await this.transporter.sendMail({
-      from: this.config.get<string>('app.smtp.from'),
+      from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
       subject: 'Reset your password',
       html: `<p>Hello ${name},</p><p>Click <a href="${link}">here</a> to reset your password.</p><p>This link expires in 1 hour.</p>`,

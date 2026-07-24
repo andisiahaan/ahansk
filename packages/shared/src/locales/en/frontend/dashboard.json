@@ -1,0 +1,21 @@
+{
+  "welcome": "Welcome back, {name}!",
+  "welcomeDesc": "Here's what's happening with your account.",
+  "quickActions": "Quick Actions",
+  "recentActivity": "Recent Activity",
+  "noActivity": "No recent activity.",
+  "stats": {
+    "unreadNotifications": "Unread Notifications",
+    "memberSince": "Member Since"
+  },
+  "actions": {
+    "editProfile": "Edit Profile",
+    "manageNotifications": "Manage Notifications",
+    "security": "Security Settings",
+    "viewBlog": "View Blog"
+  },
+  "stack": {
+    "title": "Your Starter Stack",
+    "desc": "This project is powered by a carefully crafted set of tools."
+  }
+}

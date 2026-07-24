@@ -29,7 +29,7 @@ export default function TicketsPage() {
     setLoading(true);
     try {
       const { data } = await api.get('/admin/tickets', { params: { limit: 50, ...(status ? { status } : {}) } });
-      setTickets(data.data?.tickets ?? []);
+      setTickets(data.data?.items ?? data.data?.tickets ?? (Array.isArray(data.data) ? data.data : []));
     } catch { toast.error('Failed to load tickets.'); }
     finally { setLoading(false); }
   }, [status]);

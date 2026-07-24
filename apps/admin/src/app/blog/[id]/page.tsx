@@ -22,7 +22,7 @@ export default function BlogPostEditPage() {
 
   const load = useCallback(async () => {
     const [catRes] = await Promise.all([api.get('/admin/blog/categories')]);
-    setCategories(catRes.data.data ?? []);
+    setCategories(catRes.data.data?.items ?? (Array.isArray(catRes.data.data) ? catRes.data.data : []));
     if (!isNew) {
       const { data } = await api.get(`/admin/blog/posts/${id}`);
       const p = data.data;
@@ -33,7 +33,14 @@ export default function BlogPostEditPage() {
   useEffect(() => { load(); }, [load]);
 
   const f = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }));
+    setForm((p) => {
+      if (k === 'title' && isNew) {
+        const title = e.target.value;
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        return { ...p, title, slug };
+      }
+      return { ...p, [k]: e.target.value };
+    });
 
   const save = async () => {
     setSaving(true);
@@ -49,7 +56,7 @@ export default function BlogPostEditPage() {
   };
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-6xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">{isNew ? 'New Post' : 'Edit Post'}</h1>
         <Button variant="outline" size="sm" onClick={() => router.push('/blog')}>← Back</Button>

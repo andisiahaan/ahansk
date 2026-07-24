@@ -20,6 +20,13 @@ export class PagesController {
     return { success: true, message: messages.pages.listFetched, data };
   }
 
+  @Get('id/:id')
+  @Roles('ADMIN')
+  async findById(@Param('id') id: string) {
+    const data = await this.pagesService.findById(id);
+    return { success: true, message: messages.pages.fetched, data };
+  }
+
   @Public()
   @Get(':slug')
   async findPublished(@Param('slug') slug: string, @Query('preview') preview?: string) {

@@ -18,7 +18,7 @@ export default function BlogCategoriesPage() {
 
   const load = useCallback(async () => {
     const { data } = await api.get('/admin/blog/categories');
-    setCats(data.data ?? []);
+    setCats(data.data?.items ?? (Array.isArray(data.data) ? data.data : []));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -46,10 +46,17 @@ export default function BlogCategoriesPage() {
     toast.success('Deleted.');
   };
 
-  const f = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((p) => ({ ...p, [k]: e.target.value }));
+  const f = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((p) => {
+    if (k === 'name' && editing === 'new') {
+      const name = e.target.value;
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      return { ...p, name, slug };
+    }
+    return { ...p, [k]: e.target.value };
+  });
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Blog Categories</h1>
         <Button onClick={() => { setForm(EMPTY); setEditing('new'); }}>+ New</Button>

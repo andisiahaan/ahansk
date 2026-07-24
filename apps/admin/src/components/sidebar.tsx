@@ -71,8 +71,8 @@ export function Sidebar() {
 
       <button
         className="md:hidden fixed top-3 left-4 z-50 flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-foreground"
-        onClick={() => setOpen(true)} aria-label="Open menu"
-      >☰</button>
+        onClick={() => setOpen(!open)} aria-label="Toggle menu"
+      >{open ? '✕' : '☰'}</button>
 
       {open && (
         <>

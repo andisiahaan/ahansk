@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 interface Post {
   title: string; slug: string; excerpt: string | null; content: string;
@@ -13,8 +13,10 @@ interface Post {
 
 async function getPost(slug: string): Promise<Post | null> {
   try {
-    const { data } = await api.get(`/blog/posts/${slug}`);
-    return data.data;
+    const res = await apiFetch(`/blog/posts/${slug}`);
+    if (!res.ok) return null;
+    const { data } = await res.json();
+    return data;
   } catch { return null; }
 }
 
@@ -60,7 +62,7 @@ export default async function BlogPostPage({ params }: Props) {
         </header>
 
         <div
-          className="prose prose-neutral dark:prose-invert max-w-none text-foreground"
+          className="text-foreground/90 leading-relaxed space-y-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:mt-6 [&>h3]:mb-3 [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>a]:text-primary [&>a]:underline"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 

@@ -96,6 +96,7 @@ export const UpdateUserSchema = z.object({
   email: z.string().email().optional(),
   role: z.enum(['ADMIN', 'USER']).optional(),
   is_active: z.boolean().optional(),
+  password: z.string().min(6).max(100).optional(),
 });
 export type UpdateUserDto = z.infer<typeof UpdateUserSchema>;
 

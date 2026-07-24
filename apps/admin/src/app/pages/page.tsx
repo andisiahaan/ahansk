@@ -21,7 +21,7 @@ export default function PagesPage() {
 
   const load = useCallback(async () => {
     const { data } = await api.get('/pages');
-    setPages(data.data ?? []);
+    setPages(data.data?.items ?? (Array.isArray(data.data) ? data.data : []));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -54,10 +54,16 @@ export default function PagesPage() {
   };
 
   const f = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }));
-
+    setForm((p) => {
+      if (k === 'title' && editing === 'new') {
+        const title = e.target.value;
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        return { ...p, title, slug };
+      }
+      return { ...p, [k]: e.target.value };
+    });
   if (editing !== null) return (
-    <div className="max-w-3xl">
+    <div className="max-w-6xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">{editing === 'new' ? 'New Page' : 'Edit Page'}</h1>
         <Button variant="outline" size="sm" onClick={() => { setEditing(null); setForm(EMPTY); }}>← Back</Button>

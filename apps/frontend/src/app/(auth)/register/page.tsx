@@ -8,11 +8,12 @@ import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const nextUrl = params.get('next') ?? '/dashboard';
+  const nextUrl = params.get('next') ?? (process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +47,12 @@ function RegisterForm() {
         <Label>Password</Label>
         <Input type="password" placeholder="Min 8 characters" value={form.password} onChange={set('password')} />
       </div>
+      <div className="flex items-start gap-2 mt-2">
+        <input type="checkbox" id="terms" required className="mt-1 accent-primary" />
+        <label htmlFor="terms" className="text-sm text-muted-foreground leading-tight">
+          I agree to the <Link href="/pages/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/pages/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
+        </label>
+      </div>
       <Button type="submit" loading={loading} className="w-full">Create Account</Button>
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
@@ -58,6 +65,7 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <main className="min-h-dvh flex items-center justify-center p-4 bg-background">
+      <div className="absolute top-4 right-4"><ThemeToggle /></div>
       <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-8 shadow-lg">
         <div className="text-center mb-8">
           <Logo width={120} height={32} className="mx-auto mb-5" />

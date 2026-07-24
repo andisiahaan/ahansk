@@ -17,7 +17,7 @@ export default function ApiKeysPage() {
 
   const load = useCallback(async () => {
     const { data } = await api.get('/personal-access-tokens');
-    setTokens(data.data ?? []);
+    setTokens(data.data?.items ?? (Array.isArray(data.data) ? data.data : []));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -44,8 +44,8 @@ export default function ApiKeysPage() {
   };
 
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold text-foreground mb-6">API Keys</h1>
+    <div className="max-w-6xl mx-auto w-full">
+      <div className="flex items-center justify-between mb-6"><h1 className="text-2xl font-bold text-foreground">API Keys</h1></div>
 
       {revealed && (
         <div className="mb-6 border border-success/30 bg-success/8 rounded-xl p-4 space-y-2">

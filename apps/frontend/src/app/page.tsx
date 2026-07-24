@@ -37,17 +37,19 @@ export default function HomePage() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Header / Nav */}
-      <header className="absolute top-0 w-full p-6 flex justify-between items-center z-50">
-        <Logo width={140} height={36} className="text-foreground" />
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Sign In
-          </Link>
-          <Link href="/register">
-            <Button size="sm" className="rounded-full font-semibold shadow-md hover:shadow-primary/25 transition-all">
-              Get Started
-            </Button>
-          </Link>
+      <header className="absolute top-0 w-full z-50">
+        <div className="mx-auto max-w-6xl p-6 flex justify-between items-center">
+          <Logo width={140} height={36} className="text-foreground" />
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Sign In
+            </Link>
+            <Link href="/register">
+              <Button size="sm" className="rounded-full font-semibold shadow-md hover:shadow-primary/25 transition-all">
+                Get Started
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 

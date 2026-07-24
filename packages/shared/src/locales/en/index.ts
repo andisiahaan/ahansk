@@ -5,6 +5,7 @@ import modulesNotifications from './modules/notifications.json';
 
 import frontendNav from './frontend/nav.json';
 import frontendBlog from './frontend/blog.json';
+import frontendDashboard from './frontend/dashboard.json';
 
 import adminNav from './admin/nav.json';
 import adminDashboard from './admin/dashboard.json';
@@ -32,8 +33,9 @@ export const en = {
     notifications: modulesNotifications,
   },
   frontend: {
-    nav:  frontendNav,
-    blog: frontendBlog,
+    nav:       frontendNav,
+    blog:      frontendBlog,
+    dashboard: frontendDashboard,
   },
   admin: {
     nav:           adminNav,

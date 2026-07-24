@@ -17,6 +17,7 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 - Tidak boleh ada file kode **melebihi 300 baris**. Target ideal 200–300 baris.
 - Prinsip wajib: **SSOT, SOC, DRY, MODULAR**, pemisahan tanggung jawab yang jelas.
 - **Naming convention**: semua file `kebab-case`. Exception: komponen React boleh `PascalCase.tsx`.
+- **Bur/Error Fix** : DILARANG MELAKUKAN PERBAIKAN ALTERNATIF, HARUS MELAKUKAN BEST PRACTICE BAHKAN JIKA MENYEBABKAN PERUBAHAN BESAR, DISKUSIKAN DULU
 
 ## Tech Stack
 

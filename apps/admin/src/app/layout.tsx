@@ -28,6 +28,8 @@ const themeScript = `
 })();
 `;
 
+import { QueryProvider } from '@/providers/query-provider';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   const messages = await getMessages();
@@ -39,10 +41,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="antialiased">
         <IntlProvider locale={locale} messages={messages}>
-          <ThemeProvider>
-            <AdminShell>{children}</AdminShell>
-            <Toaster />
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider>
+              <AdminShell>{children}</AdminShell>
+              <Toaster />
+            </ThemeProvider>
+          </QueryProvider>
         </IntlProvider>
       </body>
     </html>

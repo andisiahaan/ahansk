@@ -21,12 +21,6 @@ export interface AuthSettings {
   lockout_duration_minutes: number;
 }
 
-// ─── Mail Settings (DB key: "mail") ──────────────────────────────────────────
-
-export interface MailSettings {
-  from_name: string;
-  from_email: string;
-}
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
@@ -49,17 +43,12 @@ export const DEFAULT_AUTH_SETTINGS: AuthSettings = {
   lockout_duration_minutes: 15,
 };
 
-export const DEFAULT_MAIL_SETTINGS: MailSettings = {
-  from_name: 'My App',
-  from_email: 'noreply@myapp.com',
-};
 
 // ─── Key Map ──────────────────────────────────────────────────────────────────
 
 export const SETTING_KEYS = {
   APP: 'app',
   AUTH: 'auth',
-  MAIL: 'mail',
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
@@ -67,5 +56,4 @@ export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
 export type SettingValueMap = {
   app: AppGeneralSettings;
   auth: AuthSettings;
-  mail: MailSettings;
 };

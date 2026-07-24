@@ -20,6 +20,24 @@ export class UsersController {
     private readonly banService: BanService,
   ) {}
 
+  // ─── User self-service ────────────────────────────────────────────────────
+
+  @Get('me')
+  async me(@CurrentUser() user: AuthUser) {
+    return this.usersService.findById(user.id);
+  }
+
+  @Patch('me')
+  @UseInterceptors(FileInterceptor('avatar'))
+  async updateMe(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(UpdateProfileSchema)) dto: UpdateProfileDto,
+    @UploadedFile() avatar?: Express.Multer.File & { buffer: Buffer },
+  ) {
+    const file = avatar ? (avatar as unknown as StorageFile) : undefined;
+    return this.usersService.updateProfile(user.id, dto, file);
+  }
+
   // ─── Admin endpoints ──────────────────────────────────────────────────────
 
   @Get()
@@ -69,21 +87,5 @@ export class UsersController {
     return this.banService.unbanUser(id, admin.id);
   }
 
-  // ─── User self-service ────────────────────────────────────────────────────
 
-  @Get('me')
-  async me(@CurrentUser() user: AuthUser) {
-    return this.usersService.findById(user.id);
-  }
-
-  @Patch('me')
-  @UseInterceptors(FileInterceptor('avatar'))
-  async updateMe(
-    @CurrentUser() user: AuthUser,
-    @Body(new ZodValidationPipe(UpdateProfileSchema)) dto: UpdateProfileDto,
-    @UploadedFile() avatar?: Express.Multer.File & { buffer: Buffer },
-  ) {
-    const file = avatar ? (avatar as unknown as StorageFile) : undefined;
-    return this.usersService.updateProfile(user.id, dto, file);
-  }
 }

@@ -9,11 +9,12 @@ import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const nextUrl = params.get('next') ?? '/dashboard';
+  const nextUrl = params.get('next') ?? (process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard');
   const setAuth = useAuthStore((s) => s.setAuth);
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -81,7 +82,7 @@ function LoginForm() {
       <p className="text-center text-sm text-muted-foreground">
         <Link href="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
         {' · '}
-        <Link href={`/register${nextUrl !== '/dashboard' ? `?next=${nextUrl}` : ''}`}
+        <Link href={`/register${nextUrl !== (process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard') ? `?next=${nextUrl}` : ''}`}
           className="text-primary hover:underline">Create account</Link>
       </p>
     </form>
@@ -91,6 +92,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <main className="min-h-dvh flex items-center justify-center p-4 bg-background">
+      <div className="absolute top-4 right-4"><ThemeToggle /></div>
       <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-8 shadow-lg">
         <div className="text-center mb-8">
           <Logo width={120} height={32} className="mx-auto mb-5" />

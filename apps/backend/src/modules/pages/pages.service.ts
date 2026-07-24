@@ -23,6 +23,12 @@ export class PagesService {
     return page;
   }
 
+  async findById(id: string) {
+    const page = await this.repo.findById(id);
+    if (!page) throw new NotFoundException(messages.pages.notFound);
+    return page;
+  }
+
   async create(dto: CreatePageDto) {
     const publishedAt = dto.is_published ? new Date() : undefined;
     return this.repo.create({ ...dto, published_at: publishedAt });

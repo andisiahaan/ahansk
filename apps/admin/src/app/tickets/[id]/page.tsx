@@ -53,8 +53,8 @@ export default function TicketDetailPage() {
   if (!ticket) return <p className="text-sm text-muted-foreground animate-pulse">Loading…</p>;
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-6xl mx-auto w-full">
+      <div className="flex items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-foreground">{ticket.ticket_number}</h1>
         <Button variant="outline" size="sm" onClick={() => router.push('/tickets')}>← Back</Button>
       </div>

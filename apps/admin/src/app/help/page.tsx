@@ -41,7 +41,7 @@ export default function HelpCenterPage() {
         setArticles(data.data?.items ?? []);
       } else {
         const { data } = await api.get('/admin/help/categories');
-        setCategories(data.data ?? []);
+        setCategories(data.data?.items ?? (Array.isArray(data.data) ? data.data : []));
       }
     } catch {
       toast.error('Failed to load data.');

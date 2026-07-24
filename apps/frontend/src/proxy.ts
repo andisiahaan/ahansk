@@ -3,24 +3,27 @@ import type { NextRequest } from 'next/server';
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '@/i18n/request';
 
 const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
-const AUTH_ONLY_PATHS = ['/dashboard', '/profile', '/settings'];
+
+const DASHBOARD_PATH = process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard';
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get('access_token')?.value;
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  const isAuthOnly = AUTH_ONLY_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic   = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isDashboard = pathname === DASHBOARD_PATH || pathname.startsWith(DASHBOARD_PATH + '/');
 
-  if (isAuthOnly && !token) {
+  // Protect dashboard routes — redirect unauthenticated users to login
+  if (isDashboard && !token) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
+  // Redirect logged-in users away from auth pages
   if (isPublic && token && ['/login', '/register'].includes(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL(DASHBOARD_PATH, req.url));
   }
 
   // ─── Set locale cookie if missing ──────────────────────────────────────────

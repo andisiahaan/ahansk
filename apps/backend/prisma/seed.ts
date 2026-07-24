@@ -4,7 +4,6 @@ import {
   SETTING_KEYS,
   DEFAULT_APP_SETTINGS,
   DEFAULT_AUTH_SETTINGS,
-  DEFAULT_MAIL_SETTINGS,
 } from '@ahansk/shared';
 import { hash } from 'argon2';
 import 'dotenv/config';
@@ -36,7 +35,6 @@ async function seedSettings() {
   const rows = [
     { key: SETTING_KEYS.APP,  settings: DEFAULT_APP_SETTINGS  },
     { key: SETTING_KEYS.AUTH, settings: DEFAULT_AUTH_SETTINGS },
-    { key: SETTING_KEYS.MAIL, settings: DEFAULT_MAIL_SETTINGS },
   ];
   for (const { key, settings } of rows) {
     const json = settings as unknown as Parameters<typeof prisma.setting.create>[0]['data']['settings'];
@@ -200,8 +198,8 @@ async function main(): Promise<void> {
   await seedPages();
 
   log('\n✅ Seeding complete!\n');
-  log('   Admin login: admin@example.com / admin123!');
-  log('   User  login: user@example.com  / user1234!');
+  log('   Admin login: admin@ahandev.com / ahandev');
+  log('   User  login: user@ahandev.com  / ahandev');
 }
 
 main()

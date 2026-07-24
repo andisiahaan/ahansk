@@ -42,7 +42,8 @@ export default getRequestConfig(async () => {
       // Blog: shared field labels + frontend reader-context strings
       blog: { ...modules.blog, ...frontend.blog },
       // ── Frontend-specific ──────────────────────────────────────────────
-      nav: frontend.nav,
+      nav:       frontend.nav,
+      dashboard: frontend.dashboard,
     },
   };
 });

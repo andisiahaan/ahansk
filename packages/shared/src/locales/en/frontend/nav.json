@@ -1,10 +1,18 @@
 {
   "home": "Home",
   "blog": "Blog",
+  "pages": "Pages",
   "login": "Login",
+  "signIn": "Sign In",
+  "getStarted": "Get Started",
   "register": "Register",
   "logout": "Logout",
   "profile": "Profile",
   "settings": "Settings",
-  "account": "Account"
+  "security": "Security",
+  "account": "Account",
+  "dashboard": "Dashboard",
+  "notifications": "Notifications",
+  "openMenu": "Open menu",
+  "closeMenu": "Close menu"
 }

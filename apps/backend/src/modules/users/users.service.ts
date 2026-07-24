@@ -4,6 +4,7 @@ import { UsersRepository } from './users.repository';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { messages } from '@ahansk/shared';
 import type { CreateUserDto, UpdateUserDto, UpdateProfileDto } from '@ahansk/shared';
+import { buildPaginationMeta } from '@ahansk/shared';
 import type { UploadedFile } from '../../infrastructure/storage/storage.service';
 
 @Injectable()
@@ -14,7 +15,8 @@ export class UsersService {
   ) {}
 
   async findAll(page = 1, limit = 20) {
-    return this.repo.findAll(page, limit);
+    const result = await this.repo.findAll(page, limit);
+    return { items: result.data, meta: buildPaginationMeta(result.total, page, limit) };
   }
 
   async findById(id: string) {
@@ -32,7 +34,11 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto) {
     await this.findById(id);
-    return this.repo.updateUser(id, dto);
+    const data: any = { ...dto };
+    if (data.password) {
+      data.password = await argon2.hash(data.password);
+    }
+    return this.repo.updateUser(id, data);
   }
 
   async delete(id: string): Promise<void> {

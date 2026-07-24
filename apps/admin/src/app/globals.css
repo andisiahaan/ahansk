@@ -30,6 +30,7 @@
 :root {
   --hue: 258;
   --sat: 86%;
+  --sidebar-w: 260px;
 
   --background: hsl(220 16% 97%);
   --foreground: hsl(224 24% 10%);

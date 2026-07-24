@@ -71,7 +71,7 @@ export default function HelpCategoryFormPage({ params }: { params: Promise<{ id:
   if (loading) return <div className="animate-pulse text-muted-foreground">Loading...</div>;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-5xl mx-auto w-full space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={() => router.push('/help')}>
           ← Back
@@ -83,7 +83,15 @@ export default function HelpCategoryFormPage({ params }: { params: Promise<{ id:
         <div className="grid gap-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
-            <Input id="title" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+            <Input id="title" required value={formData.title} onChange={e => {
+              const title = e.target.value;
+              if (isNew) {
+                const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+                setFormData({ ...formData, title, slug });
+              } else {
+                setFormData({ ...formData, title });
+              }
+            }} />
           </div>
 
           <div className="space-y-2">

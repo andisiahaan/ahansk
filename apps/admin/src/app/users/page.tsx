@@ -33,8 +33,9 @@ export default function UsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const { data } = await api.get('/users');
-      setUsers(data.data ?? []);
+      const res = await api.get<{ data: any }>('/users');
+      const payload = res.data.data;
+      setUsers(payload?.items ?? (Array.isArray(payload) ? payload : []));
     } catch { toast.error(t('messages.loadFailed')); }
     finally { setLoading(false); }
   }, [t]);

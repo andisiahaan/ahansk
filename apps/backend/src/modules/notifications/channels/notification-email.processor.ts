@@ -36,7 +36,7 @@ export class NotificationEmailProcessor extends WorkerHost {
     const { to, name, title, message, url } = job.data;
     try {
       await this.transporter.sendMail({
-        from:    this.config.get<string>('app.smtp.from'),
+        from:    `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
         to,
         subject: title,
         html:    this.buildHtml(name, title, message, url),

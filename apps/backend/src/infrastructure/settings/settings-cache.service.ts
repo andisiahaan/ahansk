@@ -7,7 +7,6 @@ import {
   SETTING_KEYS,
   DEFAULT_APP_SETTINGS,
   DEFAULT_AUTH_SETTINGS,
-  DEFAULT_MAIL_SETTINGS,
   CACHE_KEY_SETTINGS,
 } from '@ahansk/shared';
 import type { SettingKey, SettingValueMap } from '@ahansk/shared';
@@ -39,7 +38,6 @@ export class SettingsCache {
     switch (key) {
       case SETTING_KEYS.APP:  return DEFAULT_APP_SETTINGS;
       case SETTING_KEYS.AUTH: return DEFAULT_AUTH_SETTINGS;
-      case SETTING_KEYS.MAIL: return DEFAULT_MAIL_SETTINGS;
       default: return {} as SettingValueMap[SettingKey];
     }
   }

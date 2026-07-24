@@ -32,7 +32,8 @@ export const envSchema = z.object({
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_USER: z.string().default(''),
   SMTP_PASS: z.string().default(''),
-  SMTP_FROM: z.string().email(),
+  SMTP_FROM_NAME: z.string().min(1),
+  SMTP_FROM_ADDRESS: z.string().email(),
 
   // ─── Web Push (VAPID) ────────────────────────────────────────────────────────
   VAPID_PUBLIC_KEY:    z.string().min(1).optional(),

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/sidebar';
 import { useAdminAuthStore } from '@/stores/auth.store';
+import { AccountDropdown } from '@/components/account-dropdown';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const PUBLIC_PATHS = ['/auth'];
@@ -41,10 +42,10 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 md:ml-[var(--sidebar-w)]">
         <header className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 h-14 border-b border-border bg-card">
-          <span className="font-semibold text-sm text-foreground">Admin Panel</span>
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:block text-xs text-muted-foreground">{user.name} · {user.email}</span>
+          <span className="font-semibold text-sm text-foreground ml-12 md:ml-0">Admin Panel</span>
+          <div className="flex items-center gap-2">
             <ThemeToggle />
+            <AccountDropdown />
           </div>
         </header>
         <div className="flex-1 p-4 sm:p-6">{children}</div>
