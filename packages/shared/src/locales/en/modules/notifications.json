@@ -1,0 +1,19 @@
+{
+  "channels": {
+    "database": "In-App",
+    "email": "Email",
+    "push": "Browser Push"
+  },
+  "channelDescriptions": {
+    "database": "Receive notifications inside the app",
+    "email": "Receive notifications via email",
+    "push": "Receive notifications in your browser"
+  },
+  "markAllRead": "Mark all as read",
+  "noNotifications": "No notifications yet",
+  "preferences": {
+    "title": "Notification Preferences",
+    "channelSection": "Delivery Channels",
+    "saved": "Preferences saved"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "title": "Notifications",
+  "allNotifications": "All Notifications",
+  "broadcast": {
+    "title": "Send Broadcast",
+    "typeLabel": "Notification Type",
+    "typePlaceholder": "Select type...",
+    "titleLabel": "Title",
+    "messageLabel": "Message",
+    "targetLabel": "Target",
+    "targetAll": "All Users",
+    "targetAdmins": "Admins Only",
+    "submit": "Send Broadcast",
+    "success": "Broadcast sent successfully"
+  },
+  "globalSettings": {
+    "title": "Global Notification Settings",
+    "channelsTitle": "Delivery Channels",
+    "categoriesTitle": "Notification Categories",
+    "saved": "Settings saved"
+  },
+  "empty": "No notifications",
+  "sender": "To {count} users"
+}
