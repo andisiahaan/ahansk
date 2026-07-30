@@ -1,6 +1,6 @@
 {
   "list": { "title": "Users", "subtitle": "Manage all registered users.", "total": "total" },
-  "fields": { "name": "Name", "email": "Email", "role": "Role", "status": "Status", "joined": "Joined", "verified": "Verified", "actions": "Actions", "id": "ID" },
+  "fields": { "name": "Name", "email": "Email", "role": "Role", "status": "Status", "joined": "Joined", "verified": "Verified", "actions": "Actions", "id": "ID", "password": "Password" },
   "actions": { "ban": "Ban user", "activate": "Activate", "resetPassword": "Reset password", "view": "View", "delete": "Delete", "enable": "Enable", "disable": "Disable" },
   "roles": { "ADMIN": "Admin", "USER": "User" },
   "details": {
