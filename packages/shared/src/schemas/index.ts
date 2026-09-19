@@ -74,7 +74,7 @@ export type ChangePasswordDto = z.infer<typeof ChangePasswordSchema>;
 
 // ─── Auth User (JWT payload shape) ───────────────────────────────────────────
 export const AuthUserSchema = z.object({
-  id: z.string().uuid(),
+  id: z.number().int().positive(),
   email: z.string().email(),
   name: z.string(),
   role: z.enum(['ADMIN', 'USER']),

@@ -6,7 +6,7 @@ import * as webpush from 'web-push';
 import { NotificationRepository } from '../notification.repository';
 
 export interface NotificationPushJob {
-  userId:  string;
+  userId:  number | bigint;
   title:   string;
   message: string;
   url?:    string;

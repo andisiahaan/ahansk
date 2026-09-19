@@ -12,6 +12,11 @@ import * as crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 
 async function bootstrap(): Promise<void> {
+  // ─── BigInt JSON Serialization ──────────────────────────────────────────────
+  (BigInt.prototype as unknown as { toJSON: () => number }).toJSON = function () {
+    return Number(this);
+  };
+
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   // ─── Logger ─────────────────────────────────────────────────────────────────

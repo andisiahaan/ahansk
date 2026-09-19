@@ -9,7 +9,7 @@ export const BroadcastNotificationSchema = z.object({
   title:   z.string().min(1).max(255),
   message: z.string().min(1).max(1000),
   target:  z.enum(['all', 'admins']).default('all'),
-  userIds: z.array(z.string().uuid()).optional(),
+  userIds: z.array(z.number().int().positive()).optional(),
 });
 
 export class BroadcastNotificationDto extends createZodDto(BroadcastNotificationSchema) {}

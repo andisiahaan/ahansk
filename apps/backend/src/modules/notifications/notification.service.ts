@@ -17,14 +17,14 @@ import { buildPaginationMeta } from '@ahansk/shared';
 
 interface SendInput {
   type:    NotificationType;
-  userId:  string;
+  userId:  number | bigint;
   title:   string;
   message: string;
   data?:   Record<string, unknown>;
 }
 
 interface ChannelJob {
-  userId: string;
+  userId: number | bigint;
   title:  string;
   message: string;
   data?:  Record<string, unknown>;
@@ -47,7 +47,7 @@ export class NotificationService {
 
     // 1. Selalu simpan ke database
     await this.repo.create({
-      user:     { connect: { id: input.userId } },
+      user:     { connect: { id: BigInt(input.userId) } },
       type:     input.type,
       category,
       title:    input.title,
@@ -84,7 +84,7 @@ export class NotificationService {
   async sendToAdmins(type: NotificationType, title: string, message: string, data?: Record<string, unknown>): Promise<void> {
     const admins = await this.repo.getAllAdminUsers();
     for (const a of admins) {
-      await this.send({ type, userId: a.id, title, message, data });
+      await this.send({ type, userId: Number(a.id), title, message, data });
     }
   }
 
@@ -95,7 +95,7 @@ export class NotificationService {
     }
   }
 
-  async sendBroadcast(type: NotificationType, title: string, message: string, userIds: string[], data?: Record<string, unknown>): Promise<void> {
+  async sendBroadcast(type: NotificationType, title: string, message: string, userIds: (number | bigint)[], data?: Record<string, unknown>): Promise<void> {
     for (const userId of userIds) {
       await this.send({ type, userId, title, message, data });
     }
@@ -103,20 +103,20 @@ export class NotificationService {
 
   // ─── Query Methods ─────────────────────────────────────────────────────────
 
-  async getForUser(userId: string, filter: { page?: number; limit?: number; category?: string; isRead?: boolean }) {
+  async getForUser(userId: number | bigint, filter: { page?: number; limit?: number; category?: string; isRead?: boolean }) {
     const result = await this.repo.findForUser(userId, filter);
     return { items: result.items, meta: buildPaginationMeta(result.total, result.page, result.limit) };
   }
 
-  async getUnreadCount(userId: string): Promise<number> {
+  async getUnreadCount(userId: number | bigint): Promise<number> {
     return this.repo.getUnreadCount(userId);
   }
 
-  async markRead(id: string, userId: string): Promise<void> {
+  async markRead(id: number | bigint, userId: number | bigint): Promise<void> {
     await this.repo.markRead(id, userId);
   }
 
-  async markAllRead(userId: string): Promise<void> {
+  async markAllRead(userId: number | bigint): Promise<void> {
     await this.repo.markAllRead(userId);
   }
 
@@ -127,38 +127,38 @@ export class NotificationService {
 
   // ─── Preferences ────────────────────────────────────────────────────────────
 
-  async getPreferences(userId: string): Promise<NotificationPreferences> {
+  async getPreferences(userId: number | bigint): Promise<NotificationPreferences> {
     const raw = await this.repo.getUserPreferences(userId);
     return {
       channels: (raw.channels as NotificationPreferences['channels']) ?? {},
     };
   }
 
-  async savePreferences(userId: string, prefs: NotificationPreferences): Promise<void> {
+  async savePreferences(userId: number | bigint, prefs: NotificationPreferences): Promise<void> {
     await this.repo.saveUserPreferences(userId, { channels: prefs.channels });
   }
 
   // ─── Push Subscription ────────────────────────────────────────────────────
 
-  async subscribePush(userId: string, sub: PushSubscriptionPayload): Promise<void> {
+  async subscribePush(userId: number | bigint, sub: PushSubscriptionPayload): Promise<void> {
     await this.repo.upsertPushSubscription(userId, sub.endpoint, sub.p256dh, sub.auth, sub.userAgent);
   }
 
-  async unsubscribePush(userId: string, endpoint: string): Promise<void> {
+  async unsubscribePush(userId: number | bigint, endpoint: string): Promise<void> {
     await this.repo.deletePushSubscription(userId, endpoint);
   }
 
-  async getPushSubscriptions(userId: string) {
+  async getPushSubscriptions(userId: number | bigint) {
     return this.repo.getPushSubscriptions(userId);
   }
 
-  async deletePushSubscriptionById(userId: string, id: string): Promise<void> {
+  async deletePushSubscriptionById(userId: number | bigint, id: number | bigint): Promise<void> {
     await this.repo.deletePushSubscriptionById(userId, id);
   }
 
   // ─── Private: Channel Resolution ──────────────────────────────────────────
 
-  private async resolveChannels(userId: string, type: NotificationType): Promise<string[]> {
+  private async resolveChannels(userId: number | bigint, type: NotificationType): Promise<string[]> {
     const active: string[] = [];
     const prefs  = await this.getPreferences(userId);
 

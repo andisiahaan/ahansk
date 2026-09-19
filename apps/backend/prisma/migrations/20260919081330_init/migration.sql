@@ -1,8 +1,8 @@
 -- CreateTable
 CREATE TABLE `users` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
     `email` VARCHAR(191) NOT NULL,
-    `username` VARCHAR(191) NOT NULL,
+    `username` VARCHAR(191) NULL,
     `password` VARCHAR(191) NULL,
     `name` VARCHAR(191) NOT NULL,
     `phone` VARCHAR(191) NULL,
@@ -27,8 +27,8 @@ CREATE TABLE `users` (
 
 -- CreateTable
 CREATE TABLE `oauth_accounts` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `provider` VARCHAR(191) NOT NULL,
     `provider_id` VARCHAR(191) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -40,8 +40,8 @@ CREATE TABLE `oauth_accounts` (
 
 -- CreateTable
 CREATE TABLE `refresh_tokens` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `token_hash` VARCHAR(191) NOT NULL,
     `user_agent` VARCHAR(191) NULL,
     `ip_address` VARCHAR(191) NULL,
@@ -57,8 +57,8 @@ CREATE TABLE `refresh_tokens` (
 
 -- CreateTable
 CREATE TABLE `totp_recovery_codes` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `code_hash` VARCHAR(191) NOT NULL,
     `used_at` DATETIME(3) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -69,8 +69,8 @@ CREATE TABLE `totp_recovery_codes` (
 
 -- CreateTable
 CREATE TABLE `password_reset_tokens` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `token_hash` VARCHAR(191) NOT NULL,
     `expires_at` DATETIME(3) NOT NULL,
     `used_at` DATETIME(3) NULL,
@@ -83,8 +83,8 @@ CREATE TABLE `password_reset_tokens` (
 
 -- CreateTable
 CREATE TABLE `email_verification_tokens` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `token_hash` VARCHAR(191) NOT NULL,
     `expires_at` DATETIME(3) NOT NULL,
     `used_at` DATETIME(3) NULL,
@@ -97,8 +97,8 @@ CREATE TABLE `email_verification_tokens` (
 
 -- CreateTable
 CREATE TABLE `user_activities` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NULL,
     `type` ENUM('LOGIN') NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `success` BOOLEAN NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE `user_activities` (
 
 -- CreateTable
 CREATE TABLE `settings` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
     `key` VARCHAR(191) NOT NULL,
     `settings` JSON NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -127,7 +127,7 @@ CREATE TABLE `settings` (
 
 -- CreateTable
 CREATE TABLE `news_items` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
     `content` LONGTEXT NOT NULL,
@@ -136,7 +136,7 @@ CREATE TABLE `news_items` (
     `is_pinned` BOOLEAN NOT NULL DEFAULT false,
     `published_at` DATETIME(3) NULL,
     `expires_at` DATETIME(3) NULL,
-    `author_id` VARCHAR(191) NOT NULL,
+    `author_id` BIGINT NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -148,8 +148,8 @@ CREATE TABLE `news_items` (
 
 -- CreateTable
 CREATE TABLE `notifications` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `type` VARCHAR(191) NOT NULL,
     `category` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
@@ -167,8 +167,8 @@ CREATE TABLE `notifications` (
 
 -- CreateTable
 CREATE TABLE `push_subscriptions` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `endpoint` TEXT NOT NULL,
     `p256dh` TEXT NOT NULL,
     `auth` VARCHAR(191) NOT NULL,
@@ -181,8 +181,8 @@ CREATE TABLE `push_subscriptions` (
 
 -- CreateTable
 CREATE TABLE `otps` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `purpose` VARCHAR(191) NOT NULL,
     `identifier` VARCHAR(191) NULL,
     `code_hash` VARCHAR(191) NOT NULL,
@@ -196,8 +196,8 @@ CREATE TABLE `otps` (
 
 -- CreateTable
 CREATE TABLE `pending_email_changes` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
     `new_email` VARCHAR(191) NOT NULL,
     `token_hash` VARCHAR(191) NOT NULL,
     `expires_at` DATETIME(3) NOT NULL,
@@ -210,13 +210,13 @@ CREATE TABLE `pending_email_changes` (
 
 -- CreateTable
 CREATE TABLE `user_bans` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
-    `banned_by` VARCHAR(191) NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `banned_by` BIGINT NOT NULL,
     `reason` TEXT NOT NULL,
     `expires_at` DATETIME(3) NULL,
     `unbanned_at` DATETIME(3) NULL,
-    `unbanned_by` VARCHAR(191) NULL,
+    `unbanned_by` BIGINT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `user_bans_user_id_idx`(`user_id`),

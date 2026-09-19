@@ -17,7 +17,7 @@ export class AuthEmailChangeService {
     private readonly notifications: NotificationService,
   ) {}
 
-  async requestEmailChange(userId: string, dto: RequestEmailChangeDto): Promise<{ message: string }> {
+  async requestEmailChange(userId: number, dto: RequestEmailChangeDto): Promise<{ message: string }> {
     const user = await this.repo.findUserById(userId);
     if (!user || !user.password) throw new BadRequestException('User not found or no password set.');
 
@@ -45,7 +45,7 @@ export class AuthEmailChangeService {
     return { message: 'OTP sent to your new email.' };
   }
 
-  async verifyEmailChange(userId: string, dto: VerifyEmailChangeOtpDto): Promise<{ message: string }> {
+  async verifyEmailChange(userId: number, dto: VerifyEmailChangeOtpDto): Promise<{ message: string }> {
     const user = await this.repo.findUserById(userId);
     if (!user || !user.password) throw new BadRequestException('User not found or no password set.');
 
@@ -62,7 +62,7 @@ export class AuthEmailChangeService {
 
     // Re-check uniqueness to prevent race condition
     const exists = await this.repo.findUserByEmail(pending.new_email);
-    if (exists && exists.id !== userId) {
+    if (exists && exists.id !== BigInt(userId)) {
       throw new ConflictException('Email already in use.');
     }
 
@@ -70,7 +70,7 @@ export class AuthEmailChangeService {
 
     void this.notifications.send({
       type: 'account.email_changed',
-      userId: userId,
+      userId,
       title: 'Email Address Changed',
       message: `Your account email address was changed to ${pending.new_email}.`,
     });

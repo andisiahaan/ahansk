@@ -7,7 +7,7 @@ import { UsersRepository } from '../../users/users.repository';
 import type { AuthUser } from '@ahansk/shared';
 
 interface JwtPayload {
-  sub: string;
+  sub: number | string;
   email: string;
   role: string;
   twoFactorEnabled: boolean;
@@ -38,7 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Partial token cannot access this resource');
     }
 
-    const user = await this.usersRepo.findActiveById(payload.sub);
+    const user = await this.usersRepo.findActiveById(Number(payload.sub));
 
     if (!user) throw new UnauthorizedException('User not found or inactive');
 
@@ -47,7 +47,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     return {
-      id: user.id,
+      id: Number(user.id),
       email: user.email,
       name: user.name,
       role: user.role,

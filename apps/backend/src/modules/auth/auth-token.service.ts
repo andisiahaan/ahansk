@@ -25,9 +25,9 @@ export class AuthTokenService {
     private readonly banService: BanService,
   ) {}
 
-  signAccessToken(userId: string): string {
+  signAccessToken(userId: number | bigint): string {
     return this.jwt.sign(
-      { sub: userId, type: 'access' },
+      { sub: Number(userId), type: 'access' },
       {
         expiresIn: this.config.get('app.jwt.accessExpires', '15m'),
         secret: this.config.get('app.jwt.accessSecret'),
@@ -49,7 +49,7 @@ export class AuthTokenService {
     res.clearCookie('refresh_token', { ...COOKIE_DEFAULTS, path: '/auth/refresh' });
   }
 
-  async issueTokens(userId: string, res: Response, ip?: string, ua?: string): Promise<{ message: string }> {
+  async issueTokens(userId: number | bigint, res: Response, ip?: string, ua?: string): Promise<{ message: string }> {
     const accessToken = this.signAccessToken(userId);
     const raw = crypto.randomBytes(40).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(raw).digest('hex');
@@ -68,7 +68,7 @@ export class AuthTokenService {
 
     void this.notifications.send({
       type: 'account.login_alert',
-      userId,
+      userId: Number(userId),
       title: 'New Login Detected',
       message: `Your account was accessed from${ip ? ` IP ${ip}` : ' a new device'}.`,
       data: { ip, userAgent: ua },
@@ -89,7 +89,7 @@ export class AuthTokenService {
       throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
     }
 
-    const isBanned = await this.banService.isUserBanned(record.user_id);
+    const isBanned = await this.banService.isUserBanned(Number(record.user_id));
     if (isBanned) {
       this.clearAuthCookies(res);
       throw new UnauthorizedException('Your account has been banned. Please contact support.');

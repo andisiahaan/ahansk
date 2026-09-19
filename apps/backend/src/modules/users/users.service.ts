@@ -21,7 +21,7 @@ export class UsersService {
     return { items: result.data, meta: buildPaginationMeta(result.total, page, limit) };
   }
 
-  async findById(id: string) {
+  async findById(id: number | bigint) {
     const user = await this.repo.findById(id);
     if (!user) throw new NotFoundException(messages.users.notFound);
     return user;
@@ -34,7 +34,7 @@ export class UsersService {
     return this.repo.createUser({ ...dto, password });
   }
 
-  async update(id: string, dto: UpdateUserDto, currentAdminId?: string) {
+  async update(id: number | bigint, dto: UpdateUserDto, currentAdminId?: number | bigint) {
     const user = await this.findById(id);
     if (dto.role && dto.role !== 'ADMIN' && user.role === 'ADMIN') {
       const adminCount = await this.repo.countAdmins();
@@ -49,8 +49,8 @@ export class UsersService {
     return this.repo.updateUser(id, data);
   }
 
-  async delete(id: string, currentAdminId?: string): Promise<void> {
-    if (currentAdminId && id === currentAdminId) {
+  async delete(id: number | bigint, currentAdminId?: number | bigint): Promise<void> {
+    if (currentAdminId && BigInt(id) === BigInt(currentAdminId)) {
       throw new BadRequestException('You cannot delete your own administrator account.');
     }
     const user = await this.findById(id);
@@ -63,7 +63,7 @@ export class UsersService {
     await this.repo.deleteById(id);
   }
 
-  async updateProfile(id: string, dto: UpdateProfileDto, avatarFile?: UploadedFile) {
+  async updateProfile(id: number | bigint, dto: UpdateProfileDto, avatarFile?: UploadedFile) {
     await this.findById(id);
     let avatarPath: string | undefined;
     if (avatarFile) {
@@ -72,7 +72,7 @@ export class UsersService {
     return this.repo.updateUser(id, { ...dto, ...(avatarPath ? { avatar: avatarPath } : {}) });
   }
 
-  async changePassword(id: string, dto: ChangePasswordDto): Promise<{ message: string }> {
+  async changePassword(id: number | bigint, dto: ChangePasswordDto): Promise<{ message: string }> {
     const user = await this.authRepo.findUserById(id);
     if (!user) throw new NotFoundException(messages.users.notFound);
     if (!user.password) throw new BadRequestException('No password set. Use social login.');
@@ -85,22 +85,22 @@ export class UsersService {
     return { message: 'Password updated successfully.' };
   }
 
-  async getActiveSessions(userId: string) {
+  async getActiveSessions(userId: number | bigint) {
     await this.findById(userId);
     return this.repo.findActiveSessions(userId);
   }
 
-  async revokeSession(userId: string, tokenId: string): Promise<void> {
+  async revokeSession(userId: number | bigint, tokenId: number | bigint): Promise<void> {
     await this.findById(userId);
     await this.repo.revokeSession(tokenId);
   }
 
-  async revokeAllSessions(userId: string): Promise<void> {
+  async revokeAllSessions(userId: number | bigint): Promise<void> {
     await this.findById(userId);
     await this.repo.revokeAllSessions(userId);
   }
 
-  async getActivityLog(userId: string) {
+  async getActivityLog(userId: number | bigint) {
     await this.findById(userId);
     return this.repo.findActivityByUser(userId);
   }

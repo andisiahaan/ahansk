@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus, ParseIntPipe } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -17,7 +17,7 @@ export class NewsAdminController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) { return this.svc.getById(id); }
+  getById(@Param('id', ParseIntPipe) id: number) { return this.svc.getById(id); }
 
   @Post()
   create(
@@ -29,7 +29,7 @@ export class NewsAdminController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateNewsDto,
   ) {
     return this.svc.update(id, dto);
@@ -37,7 +37,7 @@ export class NewsAdminController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string): Promise<void> {
+  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.svc.delete(id);
   }
 }

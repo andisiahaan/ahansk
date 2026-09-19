@@ -22,7 +22,7 @@ export class AuthTotpService {
     private readonly notifications: NotificationService,
   ) {}
 
-  async setupTotp(userId: string): Promise<{ secret: string; qrCodeDataUrl: string }> {
+  async setupTotp(userId: number): Promise<{ secret: string; qrCodeDataUrl: string }> {
     const user = await this.repo.findUserById(userId);
     if (!user) throw new UnauthorizedException();
     if (user.totp_enabled) throw new BadRequestException(messages.auth.twoFactorAlreadyEnabled);
@@ -35,7 +35,7 @@ export class AuthTotpService {
     return { secret, qrCodeDataUrl };
   }
 
-  async enableTotp(userId: string, dto: EnableTotpDto): Promise<{ recoveryCodes: string[] }> {
+  async enableTotp(userId: number, dto: EnableTotpDto): Promise<{ recoveryCodes: string[] }> {
     const user = await this.repo.findUserById(userId);
     if (!user?.totp_secret) throw new BadRequestException('TOTP setup not initiated');
     if (user.totp_enabled) throw new BadRequestException(messages.auth.twoFactorAlreadyEnabled);
@@ -61,7 +61,7 @@ export class AuthTotpService {
     return { recoveryCodes: codes };
   }
 
-  async regenerateRecoveryCodes(userId: string, dto: DisableTotpDto): Promise<{ recoveryCodes: string[] }> {
+  async regenerateRecoveryCodes(userId: number, dto: DisableTotpDto): Promise<{ recoveryCodes: string[] }> {
     const user = await this.repo.findUserById(userId);
     if (!user) throw new UnauthorizedException();
     if (!user.totp_enabled) throw new BadRequestException(messages.auth.twoFactorNotEnabled);
@@ -87,7 +87,7 @@ export class AuthTotpService {
     return { recoveryCodes: codes };
   }
 
-  async disableTotp(userId: string, dto: DisableTotpDto): Promise<{ message: string }> {
+  async disableTotp(userId: number, dto: DisableTotpDto): Promise<{ message: string }> {
     const user = await this.repo.findUserById(userId);
     if (!user) throw new UnauthorizedException();
     if (!user.totp_enabled) throw new BadRequestException(messages.auth.twoFactorNotEnabled);
@@ -108,9 +108,9 @@ export class AuthTotpService {
   }
 
   async verifyTotpLogin(dto: VerifyTotpDto, res: Response, ip?: string, ua?: string) {
-    let payload: { sub: string; type: string };
+    let payload: { sub: number | string; type: string };
     try {
-      payload = this.jwt.verify<{ sub: string; type: string }>(dto.partialToken, {
+      payload = this.jwt.verify<{ sub: number | string; type: string }>(dto.partialToken, {
         secret: this.config.get('app.jwt.accessSecret'),
       });
     } catch {
@@ -118,7 +118,7 @@ export class AuthTotpService {
     }
     if (payload.type !== 'partial') throw new UnauthorizedException(messages.auth.invalidToken);
 
-    const user = await this.repo.findUserById(payload.sub);
+    const user = await this.repo.findUserById(Number(payload.sub));
     if (!user?.totp_secret) throw new UnauthorizedException();
 
     if (dto.code.length === 6 && /^\d+$/.test(dto.code)) {
@@ -135,6 +135,6 @@ export class AuthTotpService {
     }
 
     await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: user.email, success: true, ip_address: ip, user_agent: ua });
-    return this.authService.issueTokens(user.id, res, ip, ua);
+    return this.authService.issueTokens(Number(user.id), res, ip, ua);
   }
 }

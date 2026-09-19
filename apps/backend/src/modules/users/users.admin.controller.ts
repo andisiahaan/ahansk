@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, HttpCode, HttpStatus,
+  Param, Body, Query, HttpCode, HttpStatus, ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { BanService } from './ban.service';
@@ -23,7 +23,7 @@ export class UsersAdminController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findById(id);
   }
 
@@ -34,7 +34,7 @@ export class UsersAdminController {
 
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
     @CurrentUser() admin: AuthUser,
   ) {
@@ -44,7 +44,7 @@ export class UsersAdminController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @CurrentUser() admin: AuthUser,
   ): Promise<void> {
     await this.usersService.delete(id, admin.id);
@@ -52,7 +52,7 @@ export class UsersAdminController {
 
   @Post(':id/ban')
   async banUser(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: BanUserDto,
     @CurrentUser() admin: AuthUser,
   ) {
@@ -60,29 +60,35 @@ export class UsersAdminController {
   }
 
   @Post(':id/unban')
-  async unbanUser(@Param('id') id: string, @CurrentUser() admin: AuthUser) {
+  async unbanUser(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() admin: AuthUser,
+  ) {
     return this.banService.unbanUser(id, admin.id);
   }
 
   @Get(':id/sessions')
-  async getSessions(@Param('id') id: string) {
+  async getSessions(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getActiveSessions(id);
   }
 
   @Delete(':id/sessions')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async revokeAllSessions(@Param('id') id: string): Promise<void> {
+  async revokeAllSessions(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.usersService.revokeAllSessions(id);
   }
 
   @Delete(':id/sessions/:tokenId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async revokeSession(@Param('id') id: string, @Param('tokenId') tokenId: string): Promise<void> {
+  async revokeSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('tokenId', ParseIntPipe) tokenId: number,
+  ): Promise<void> {
     await this.usersService.revokeSession(id, tokenId);
   }
 
   @Get(':id/activity')
-  async getActivity(@Param('id') id: string) {
+  async getActivity(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getActivityLog(id);
   }
 }

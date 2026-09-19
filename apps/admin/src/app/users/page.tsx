@@ -11,7 +11,7 @@ import { cn } from '@/lib/cn';
 import { CreateUserModal } from './create-user-modal';
 
 interface User {
-  id: string; name: string; email: string; role: string;
+  id: number; name: string; email: string; role: string;
   is_active: boolean; email_verified_at: string | null;
 }
 
@@ -63,7 +63,7 @@ export default function UsersPage() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const toggleActive = async (id: string, is_active: boolean) => {
+  const toggleActive = async (id: number, is_active: boolean) => {
     try {
       await api.patch(`/admin/users/${id}`, { is_active: !is_active });
       setUsers((p) => p.map((u) => u.id === id ? { ...u, is_active: !is_active } : u));
@@ -71,7 +71,7 @@ export default function UsersPage() {
     } catch { toast.error(t('messages.updateFailed')); }
   };
 
-  const deleteUser = async (id: string) => {
+  const deleteUser = async (id: number) => {
     if (!confirm(t('details.confirmDelete'))) return;
     try {
       await api.delete(`/admin/users/${id}`);

@@ -49,7 +49,7 @@ export function NotificationsList() {
   });
 
   const markOneMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/notifications/${id}/read`),
+    mutationFn: (id: number) => api.patch(`/notifications/${id}/read`),
     onSuccess:  () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 

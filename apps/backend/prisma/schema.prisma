@@ -29,9 +29,9 @@ enum NewsType {
 // ─── User & Auth ─────────────────────────────────────────────────────────────
 
 model User {
-  id                String    @id @default(uuid())
+  id                BigInt    @id @default(autoincrement())
   email             String    @unique
-  username          String    @unique @default(uuid())
+  username          String?   @unique
   password          String?
   name              String
   phone             String?
@@ -72,8 +72,8 @@ model User {
 }
 
 model OAuthAccount {
-  id          String   @id @default(uuid())
-  user_id     String
+  id          BigInt   @id @default(autoincrement())
+  user_id     BigInt
   user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   provider    String
   provider_id String
@@ -85,8 +85,8 @@ model OAuthAccount {
 }
 
 model RefreshToken {
-  id          String    @id @default(uuid())
-  user_id     String
+  id          BigInt    @id @default(autoincrement())
+  user_id     BigInt
   user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   token_hash  String    @unique
   user_agent  String?
@@ -102,8 +102,8 @@ model RefreshToken {
 }
 
 model TotpRecoveryCode {
-  id         String    @id @default(uuid())
-  user_id    String
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
   user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   code_hash  String
   used_at    DateTime?
@@ -114,8 +114,8 @@ model TotpRecoveryCode {
 }
 
 model PasswordResetToken {
-  id         String    @id @default(uuid())
-  user_id    String
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
   user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   token_hash String    @unique
   expires_at DateTime
@@ -127,8 +127,8 @@ model PasswordResetToken {
 }
 
 model EmailVerificationToken {
-  id         String    @id @default(uuid())
-  user_id    String
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
   user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   token_hash String    @unique
   expires_at DateTime
@@ -140,8 +140,8 @@ model EmailVerificationToken {
 }
 
 model UserActivity {
-  id         String           @id @default(uuid())
-  user_id    String?
+  id         BigInt           @id @default(autoincrement())
+  user_id    BigInt?
   user       User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
   type       UserActivityType
   email      String
@@ -161,7 +161,7 @@ model UserActivity {
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
 model Setting {
-  id         String   @id @default(uuid())
+  id         BigInt   @id @default(autoincrement())
   key        String   @unique
   settings   Json
   created_at DateTime @default(now())
@@ -173,7 +173,7 @@ model Setting {
 // ─── News ─────────────────────────────────────────────────────────────────────
 
 model NewsItem {
-  id           String    @id @default(uuid())
+  id           BigInt    @id @default(autoincrement())
   title        String
   slug         String    @unique
   content      String    @db.LongText
@@ -182,7 +182,7 @@ model NewsItem {
   is_pinned    Boolean   @default(false)
   published_at DateTime?
   expires_at   DateTime?
-  author_id    String
+  author_id    BigInt
   author       User      @relation(fields: [author_id], references: [id], onDelete: Restrict)
 
   created_at DateTime @default(now())
@@ -196,8 +196,8 @@ model NewsItem {
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 model Notification {
-  id      String @id @default(uuid())
-  user_id String
+  id      BigInt @id @default(autoincrement())
+  user_id BigInt
   user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   type     String // e.g. "account.password_changed"
@@ -219,8 +219,8 @@ model Notification {
 }
 
 model PushSubscription {
-  id         String  @id @default(uuid())
-  user_id    String
+  id         BigInt  @id @default(autoincrement())
+  user_id    BigInt
   user       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   endpoint   String  @db.Text
   p256dh     String  @db.Text
@@ -236,8 +236,8 @@ model PushSubscription {
 // ─── OTP ──────────────────────────────────────────────────────────────────────
 
 model Otp {
-  id         String   @id @default(uuid())
-  user_id    String
+  id         BigInt   @id @default(autoincrement())
+  user_id    BigInt
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   purpose    String // 'email_change', 'phone_change', 'action_confirm', dll
   identifier String? // context data: new_email, phone, reference_id, dll
@@ -253,8 +253,8 @@ model Otp {
 // ─── Pending Email Change ─────────────────────────────────────────────────────
 
 model PendingEmailChange {
-  id         String   @id @default(uuid())
-  user_id    String
+  id         BigInt   @id @default(autoincrement())
+  user_id    BigInt
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   new_email  String
   token_hash String   @unique // SHA-256 dari random 32 bytes
@@ -268,15 +268,15 @@ model PendingEmailChange {
 // ─── User Bans ────────────────────────────────────────────────────────────────
 
 model UserBan {
-  id          String    @id @default(uuid())
-  user_id     String
+  id          BigInt    @id @default(autoincrement())
+  user_id     BigInt
   user        User      @relation("BannedUser", fields: [user_id], references: [id], onDelete: Cascade)
-  banned_by   String
+  banned_by   BigInt
   admin       User      @relation("BannedBy", fields: [banned_by], references: [id])
   reason      String    @db.Text
   expires_at  DateTime? // null = permanent
   unbanned_at DateTime?
-  unbanned_by String?
+  unbanned_by BigInt?
   unban_admin User?     @relation("UnbannedBy", fields: [unbanned_by], references: [id])
   created_at  DateTime  @default(now())
 

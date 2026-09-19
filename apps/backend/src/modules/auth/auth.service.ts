@@ -130,7 +130,7 @@ export class AuthService {
     await this.repo.updateUser(user.id, { failed_login_attempts: 0, locked_until: null });
 
     if (user.totp_enabled) {
-      const partialToken = this.jwt.sign({ sub: user.id, type: 'partial' }, { expiresIn: '10m', secret: this.config.get('app.jwt.accessSecret') });
+      const partialToken = this.jwt.sign({ sub: Number(user.id), type: 'partial' }, { expiresIn: '10m', secret: this.config.get('app.jwt.accessSecret') });
       return { requiresTwoFactor: true, partialToken };
     }
 
@@ -183,7 +183,7 @@ export class AuthService {
     return this.tokenService.logout(res);
   }
 
-  async issueTokens(userId: string, res: Response, ip?: string, ua?: string) {
+  async issueTokens(userId: number, res: Response, ip?: string, ua?: string) {
     return this.tokenService.issueTokens(userId, res, ip, ua);
   }
 
@@ -200,11 +200,11 @@ export class AuthService {
 
   // ─── Email Change Delegation ──────────────────────────────────────────────
 
-  async requestEmailChange(userId: string, dto: RequestEmailChangeDto) {
+  async requestEmailChange(userId: number, dto: RequestEmailChangeDto) {
     return this.emailChangeService.requestEmailChange(userId, dto);
   }
 
-  async verifyEmailChange(userId: string, dto: VerifyEmailChangeOtpDto) {
+  async verifyEmailChange(userId: number, dto: VerifyEmailChangeOtpDto) {
     return this.emailChangeService.verifyEmailChange(userId, dto);
   }
 
@@ -233,7 +233,7 @@ export class AuthService {
     await this.repo.revokeAllUserRefreshTokens(record.user_id);
     void this.notifications.send({
       type: 'account.password_changed',
-      userId: record.user_id,
+      userId: Number(record.user_id),
       title: 'Password Changed',
       message: 'Your account password has been changed. If you did not do this, please contact support immediately.',
     });
