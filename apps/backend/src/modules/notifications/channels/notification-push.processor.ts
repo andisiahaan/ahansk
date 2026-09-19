@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import * as webpush from 'web-push';
-import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { NotificationRepository } from '../notification.repository';
 
 export interface NotificationPushJob {
   userId:  string;
@@ -18,7 +18,7 @@ export class NotificationPushProcessor extends WorkerHost {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly prisma: PrismaService,
+    private readonly repo: NotificationRepository,
   ) {
     super();
     const publicKey = this.config.get<string>('app.vapid.publicKey');
@@ -37,7 +37,7 @@ export class NotificationPushProcessor extends WorkerHost {
   async process(job: Job<NotificationPushJob>): Promise<void> {
     const { userId, title, message, url } = job.data;
 
-    const subscriptions = await this.prisma.pushSubscription.findMany({ where: { user_id: userId } });
+    const subscriptions = await this.repo.findPushSubscriptionsForSending(userId);
     if (!subscriptions.length) return;
 
     const payload = JSON.stringify({ title, body: message, url: url ?? '/' });
@@ -54,7 +54,7 @@ export class NotificationPushProcessor extends WorkerHost {
           const status = (err as { statusCode?: number }).statusCode;
           // 410 Gone = subscription expired → remove it
           if (status === 410 || status === 404) {
-            await this.prisma.pushSubscription.delete({ where: { id: sub.id } });
+            await this.repo.deletePushSubscriptionByIdDirect(sub.id);
           } else {
             this.logger.warn(`[notification:push] Failed sub ${sub.id}`, err);
           }

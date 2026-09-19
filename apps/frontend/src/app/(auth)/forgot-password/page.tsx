@@ -10,17 +10,20 @@ import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useRecaptcha } from '@/lib/use-recaptcha';
 import { ForgotPasswordSchema, type ForgotPasswordDto } from '@ahansk/shared';
 
 function ForgotPasswordForm() {
   const router = useRouter();
+  const { getRecaptchaToken } = useRecaptcha();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotPasswordDto>({
     resolver: zodResolver(ForgotPasswordSchema),
   });
 
   const onSubmit = async (data: ForgotPasswordDto) => {
     try {
-      await api.post('/auth/forgot-password', { ...data, recaptchaToken: 'bypass-dev' });
+      const recaptchaToken = (await getRecaptchaToken('forgot_password')) ?? 'bypass-dev';
+      await api.post('/auth/forgot-password', { ...data, recaptchaToken });
       toast.success("Check your inbox! If that email exists, a reset link has been sent.");
       router.push('/login');
     } catch (err: unknown) {

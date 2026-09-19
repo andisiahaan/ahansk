@@ -9,29 +9,28 @@ export default function DashboardPage() {
 
   const { data: usersData } = useQuery({
     queryKey: ['admin-stats-users'],
-    queryFn: () => api.get('/users').then(res => res.data.data),
+    queryFn: () => api.get('/admin/users').then(res => res.data.data),
   });
 
-  const { data: pagesData } = useQuery({
-    queryKey: ['admin-stats-pages'],
-    queryFn: () => api.get('/pages').then(res => res.data.data),
+  const { data: newsData } = useQuery({
+    queryKey: ['admin-stats-news'],
+    queryFn: () => api.get('/news').then(res => res.data.data),
   });
 
   const stats = {
-    users: usersData?.length ?? 0,
-    pages: pagesData?.length ?? 0,
+    users: usersData?.meta?.total ?? (Array.isArray(usersData?.items) ? usersData.items.length : 0),
+    news: newsData?.meta?.total ?? (Array.isArray(newsData?.items) ? newsData.items.length : 0),
   };
 
   const CARDS = [
     { icon: '👥', label: t('stats.totalUsers'), href: '/users', key: 'users' as const, accent: 'text-primary' },
-    { icon: '📄', label: t('stats.totalPages'), href: '/pages', key: 'pages' as const, accent: 'text-primary' },
+    { icon: '📰', label: t('stats.totalNews'), href: '/news', key: 'news' as const, accent: 'text-primary' },
     { icon: '⚡', label: t('stats.apiStatus'), href: '#', key: null, accent: 'text-success' },
   ];
 
   const QUICK = [
     { href: '/users', label: t('quickLinks.manageUsers') },
-
-    { href: '/pages', label: t('quickLinks.managePages') },
+    { href: '/news', label: t('quickLinks.manageNews') },
     { href: '/settings', label: t('quickLinks.appSettings') },
   ];
 

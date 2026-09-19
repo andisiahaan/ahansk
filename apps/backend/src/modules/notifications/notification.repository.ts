@@ -107,4 +107,20 @@ export class NotificationRepository {
   async getAllAdminUsers() {
     return this.prisma.user.findMany({ where: { role: 'ADMIN', is_active: true }, select: { id: true } });
   }
+
+  async getAllActiveUserIds(): Promise<string[]> {
+    const users = await this.prisma.user.findMany({ where: { is_active: true }, select: { id: true } });
+    return users.map((u) => u.id);
+  }
+
+  async findPushSubscriptionsForSending(userId: string) {
+    return this.prisma.pushSubscription.findMany({
+      where: { user_id: userId },
+      select: { id: true, endpoint: true, p256dh: true, auth: true },
+    });
+  }
+
+  async deletePushSubscriptionByIdDirect(id: string): Promise<void> {
+    await this.prisma.pushSubscription.delete({ where: { id } });
+  }
 }

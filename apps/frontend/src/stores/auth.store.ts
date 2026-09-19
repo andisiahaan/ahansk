@@ -7,7 +7,7 @@ interface AuthUser {
   name: string;
   email: string;
   role: string;
-  avatar_url?: string | null;
+  avatar?: string | null;
   totp_enabled: boolean;
 }
 

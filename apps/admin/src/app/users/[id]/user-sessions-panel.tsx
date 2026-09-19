@@ -17,8 +17,8 @@ export function UserSessionsPanel({ userId }: { userId: string }) {
 
   const load = useCallback(async () => {
     const [s, a] = await Promise.allSettled([
-      api.get(`/users/${userId}/sessions`),
-      api.get(`/users/${userId}/activity`),
+      api.get(`/admin/users/${userId}/sessions`),
+      api.get(`/admin/users/${userId}/activity`),
     ]);
     if (s.status === 'fulfilled') setSessions(s.value.data.data ?? []);
     if (a.status === 'fulfilled') setActivity(a.value.data.data ?? []);
@@ -29,7 +29,7 @@ export function UserSessionsPanel({ userId }: { userId: string }) {
   const revoke = async (tokenId: string) => {
     setRevoking(tokenId);
     try {
-      await api.delete(`/users/${userId}/sessions/${tokenId}`);
+      await api.delete(`/admin/users/${userId}/sessions/${tokenId}`);
       setSessions((prev) => prev.filter((s) => s.id !== tokenId));
       toast.success('Session revoked.');
     } catch { toast.error('Failed to revoke session.'); }
@@ -40,7 +40,7 @@ export function UserSessionsPanel({ userId }: { userId: string }) {
     if (!confirm('Revoke ALL active sessions for this user? They will be logged out immediately.')) return;
     setRevokingAll(true);
     try {
-      await api.delete(`/users/${userId}/sessions`);
+      await api.delete(`/admin/users/${userId}/sessions`);
       setSessions([]);
       toast.success('All sessions revoked.');
     } catch { toast.error('Failed to revoke sessions.'); }

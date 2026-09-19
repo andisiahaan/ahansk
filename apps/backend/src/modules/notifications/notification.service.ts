@@ -88,6 +88,13 @@ export class NotificationService {
     }
   }
 
+  async sendToAllUsers(type: NotificationType, title: string, message: string, data?: Record<string, unknown>): Promise<void> {
+    const userIds = await this.repo.getAllActiveUserIds();
+    for (const userId of userIds) {
+      await this.send({ type, userId, title, message, data });
+    }
+  }
+
   async sendBroadcast(type: NotificationType, title: string, message: string, userIds: string[], data?: Record<string, unknown>): Promise<void> {
     for (const userId of userIds) {
       await this.send({ type, userId, title, message, data });

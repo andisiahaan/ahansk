@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Tag } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface NewsDetail {
   id:           string;
@@ -66,7 +67,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
         <div
           className="prose prose-sm dark:prose-invert max-w-none text-foreground"
-          dangerouslySetInnerHTML={{ __html: item.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.content) }}
         />
       </article>
     </div>

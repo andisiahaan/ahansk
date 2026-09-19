@@ -7,6 +7,7 @@ import { Settings, Shield, LogOut, ChevronDown, User } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 
 import { cn } from '@/lib/cn';
+import { getImageUrl } from '@/lib/api';
 
 interface AccountDropdownProps {
   className?: string;
@@ -44,6 +45,8 @@ export function AccountDropdown({ className }: AccountDropdownProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const avatarUrl = getImageUrl(user.avatar);
+
   return (
     <div ref={ref} className={cn('relative', className)}>
       <button
@@ -53,9 +56,9 @@ export function AccountDropdown({ className }: AccountDropdownProps) {
         aria-haspopup="true"
       >
         {/* Avatar */}
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
-          {user.avatar_url
-            ? <img src={user.avatar_url} alt={user.name} className="size-8 rounded-full object-cover" />
+        <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0 overflow-hidden">
+          {avatarUrl
+            ? <img src={avatarUrl} alt={user.name} className="size-8 rounded-full object-cover" />
             : initials}
         </span>
         <span className="hidden lg:block text-left">

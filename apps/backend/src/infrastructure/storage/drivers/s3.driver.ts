@@ -6,7 +6,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
 import type { StorageDriver, UploadedFile } from '../storage.service';
 import type { UploadContext } from '../../../config/filesystem';
 import { UPLOAD_CONFIGS } from '../../../config/filesystem';
@@ -46,5 +48,17 @@ export class S3Driver implements StorageDriver {
 
   async delete(filePath: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: filePath }));
+  }
+
+  async getObject(key: string): Promise<{ stream: Readable; contentType?: string; contentLength?: number }> {
+    const response = await this.client.send(new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    }));
+    return {
+      stream: response.Body as unknown as Readable,
+      contentType: response.ContentType,
+      contentLength: response.ContentLength,
+    };
   }
 }

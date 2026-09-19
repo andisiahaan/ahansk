@@ -1,8 +1,9 @@
 'use client';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import api from '@/lib/api';
 import { useAdminAuthStore } from '@/stores/auth.store';
 import { LoginSchema, type LoginDto } from '@ahansk/shared';
@@ -13,11 +14,66 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
+const TotpSchema = z.object({ code: z.string().min(6).max(11, 'Invalid code format') });
+type TotpValues = z.infer<typeof TotpSchema>;
+
+interface TotpFormProps {
+  partial: string;
+  onBack: () => void;
+}
+
+function TotpForm({ partial, onBack }: TotpFormProps) {
+  const router = useRouter();
+  const params = useSearchParams();
+  const nextUrl = params.get('from') ?? '/';
+  const fetchMe = useAdminAuthStore((s) => s.fetchMe);
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TotpValues>({
+    resolver: zodResolver(TotpSchema),
+  });
+
+  const onSubmit = async ({ code }: TotpValues) => {
+    try {
+      await api.post('/auth/2fa/verify', { partialToken: partial, code });
+      await fetchMe();
+      const user = useAdminAuthStore.getState().user;
+      if (!user) {
+        toast.error('Access denied. Admins only.');
+        return;
+      }
+      toast.success('Welcome back, ' + user.name + '!');
+      router.push(nextUrl);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? 'Invalid 2FA code. Please try again.');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Label>Authenticator or Recovery Code</Label>
+        <Input placeholder="000000 or XXXXX-YYYYY" maxLength={11} autoFocus {...register('code')} />
+        {errors.code && <p className="text-xs text-destructive">{errors.code.message}</p>}
+      </div>
+      <Button type="submit" loading={isSubmitting} className="w-full">Verify & Sign In</Button>
+      <button
+        type="button"
+        onClick={onBack}
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
+      >
+        ← Back to login
+      </button>
+    </form>
+  );
+}
+
 function AdminLoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const nextUrl = params.get('from') ?? '/';
   const fetchMe = useAdminAuthStore((s) => s.fetchMe);
+  const [twoFactor, setTwoFactor] = useState<{ partial: string } | null>(null);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginDto>({
     resolver: zodResolver(LoginSchema),
@@ -28,7 +84,7 @@ function AdminLoginForm() {
       // Cookies are set by the server via Set-Cookie — no token in response body
       const { data: res } = await api.post('/auth/login', { ...data, recaptchaToken: 'bypass-dev' });
       if (res.data?.requiresTwoFactor) {
-        toast.warning('2FA is not yet supported in admin.');
+        setTwoFactor({ partial: res.data.partialToken });
         return;
       }
       // Populate store — verifies ADMIN role via /users/me
@@ -42,6 +98,10 @@ function AdminLoginForm() {
       toast.error(msg ?? 'Login failed.');
     }
   };
+
+  if (twoFactor) {
+    return <TotpForm partial={twoFactor.partial} onBack={() => setTwoFactor(null)} />;
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">

@@ -3,7 +3,6 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
-  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -13,25 +12,19 @@ import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { AuthRepository } from './auth.repository';
+import { AuthTokenService } from './auth-token.service';
+import { AuthEmailChangeService } from './auth-email-change.service';
 import { EmailService } from '../../infrastructure/email/email.service';
 import { RecaptchaService } from '../../infrastructure/recaptcha/recaptcha.service';
 import { SettingsCache } from '../../infrastructure/settings/settings-cache.service';
 import { NotificationService } from '../notifications/notification.service';
-import { OtpService } from '../otp/otp.service';
 import { BanService } from '../users/ban.service';
 import { messages, SETTING_KEYS } from '@ahansk/shared';
 import type {
   RegisterDto, LoginDto, GoogleAuthDto,
-  ForgotPasswordDto, ResetPasswordDto, AuthUser,
-  RequestEmailChangeDto, VerifyEmailChangeOtpDto
+  ForgotPasswordDto, ResetPasswordDto,
+  RequestEmailChangeDto, VerifyEmailChangeOtpDto,
 } from '@ahansk/shared';
-
-const COOKIE_DEFAULTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  path: '/',
-};
 
 @Injectable()
 export class AuthService {
@@ -40,13 +33,14 @@ export class AuthService {
 
   constructor(
     private readonly repo: AuthRepository,
+    private readonly tokenService: AuthTokenService,
+    private readonly emailChangeService: AuthEmailChangeService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly email: EmailService,
     private readonly recaptcha: RecaptchaService,
     private readonly settingsCache: SettingsCache,
     private readonly notifications: NotificationService,
-    private readonly otp: OtpService,
     private readonly banService: BanService,
   ) {
     this.googleClientId = config.get<string>('app.google.clientId', '');
@@ -141,10 +135,10 @@ export class AuthService {
     }
 
     await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: dto.email, success: true, ip_address: ip, user_agent: ua });
-    return this.issueTokens(user.id, res, ip, ua);
+    return this.tokenService.issueTokens(user.id, res, ip, ua);
   }
 
-  // ─── Google Auth ───────────────────────────────────────────────────────────────
+  // ─── Google Auth ──────────────────────────────────────────────────────────
 
   async googleAuth(dto: GoogleAuthDto, res: Response, ip?: string, ua?: string) {
     if (!this.googleClient) {
@@ -176,47 +170,21 @@ export class AuthService {
     }
 
     await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: user.email, success: true, ip_address: ip, user_agent: ua });
-    return this.issueTokens(user.id, res, ip, ua);
+    return this.tokenService.issueTokens(user.id, res, ip, ua);
   }
 
-  // ─── Token Management ─────────────────────────────────────────────────────
+  // ─── Token Delegation ─────────────────────────────────────────────────────
 
   async refresh(rawToken: string, res: Response, ip?: string, ua?: string) {
-    if (!rawToken) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
-
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const record = await this.repo.findRefreshToken(tokenHash);
-
-    if (!record || record.revoked_at || record.expires_at < new Date()) {
-      if (record?.replaced_by) await this.repo.revokeAllUserRefreshTokens(record.user_id);
-      this.clearAuthCookies(res);
-      throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
-    }
-
-    const isBanned = await this.banService.isUserBanned(record.user_id);
-    if (isBanned) {
-      this.clearAuthCookies(res);
-      throw new UnauthorizedException('Your account has been banned. Please contact support.');
-    }
-
-    const newRaw = crypto.randomBytes(40).toString('hex');
-    const newHash = crypto.createHash('sha256').update(newRaw).digest('hex');
-    const days = this.config.get<number>('app.jwt.refreshExpiresDays', 7);
-    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    await this.repo.rotateRefreshToken(tokenHash, newHash, expiresAt);
-
-    const accessToken = this.signAccessToken(record.user_id);
-    this.setAuthCookies(res, accessToken, newRaw, expiresAt);
-    return { message: 'Token refreshed' };
+    return this.tokenService.refresh(rawToken, res, ip, ua);
   }
 
   async logout(res: Response): Promise<void> {
-    const rawToken = res.req.cookies?.refresh_token as string | undefined;
-    if (rawToken) {
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-      await this.repo.revokeRefreshToken(tokenHash);
-    }
-    this.clearAuthCookies(res);
+    return this.tokenService.logout(res);
+  }
+
+  async issueTokens(userId: string, res: Response, ip?: string, ua?: string) {
+    return this.tokenService.issueTokens(userId, res, ip, ua);
   }
 
   // ─── Email Verification ───────────────────────────────────────────────────
@@ -230,64 +198,14 @@ export class AuthService {
     return { message: messages.auth.emailVerified };
   }
 
-  // ─── Email Change ─────────────────────────────────────────────────────────
+  // ─── Email Change Delegation ──────────────────────────────────────────────
 
   async requestEmailChange(userId: string, dto: RequestEmailChangeDto) {
-    const user = await this.repo.findUserById(userId);
-    if (!user || !user.password) throw new BadRequestException('User not found or no password set.');
-
-    const valid = await argon2.verify(user.password, dto.password);
-    if (!valid) throw new BadRequestException('Invalid password.');
-
-    const exists = await this.repo.findUserByEmail(dto.new_email);
-    if (exists) throw new ConflictException('Email already in use.');
-
-    const result = await this.otp.sendOtp({
-      userId,
-      purpose: 'email_change',
-      toEmail: dto.new_email,
-      toName: user.name,
-      ttlMinutes: 15,
-    });
-
-    if (!result.sent) {
-      throw new BadRequestException(`Please wait ${result.cooldownSeconds} seconds before requesting a new OTP.`);
-    }
-
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-    await this.repo.createPendingEmailChange(userId, dto.new_email, expiresAt);
-
-    return { message: 'OTP sent to your new email.' };
+    return this.emailChangeService.requestEmailChange(userId, dto);
   }
 
   async verifyEmailChange(userId: string, dto: VerifyEmailChangeOtpDto) {
-    const user = await this.repo.findUserById(userId);
-    if (!user || !user.password) throw new BadRequestException('User not found or no password set.');
-
-    const validPwd = await argon2.verify(user.password, dto.password);
-    if (!validPwd) throw new BadRequestException('Invalid password.');
-
-    // Verify OTP first
-    const validOtp = await this.otp.verifyOtp({ userId, purpose: 'email_change', code: dto.otp });
-    if (!validOtp) throw new BadRequestException('Invalid or expired OTP.');
-
-    const pending = await this.repo.findPendingEmailChangeByUserId(userId);
-    
-    if (!pending || pending.new_email !== dto.new_email) {
-      throw new BadRequestException('Invalid email change request.');
-    }
-
-    await this.repo.updateUser(userId, { email: pending.new_email });
-    await this.repo.deletePendingEmailChange(pending.id);
-
-    void this.notifications.send({
-      type:    'account.email_changed',
-      userId:  userId,
-      title:   'Email Address Changed',
-      message: `Your account email address was changed to ${pending.new_email}.`,
-    });
-
-    return { message: 'Email successfully changed.' };
+    return this.emailChangeService.verifyEmailChange(userId, dto);
   }
 
   // ─── Password Reset ───────────────────────────────────────────────────────
@@ -314,45 +232,11 @@ export class AuthService {
     await this.repo.updateUser(record.user_id, { password: passwordHash });
     await this.repo.revokeAllUserRefreshTokens(record.user_id);
     void this.notifications.send({
-      type:    'account.password_changed',
-      userId:  record.user_id,
-      title:   'Password Changed',
+      type: 'account.password_changed',
+      userId: record.user_id,
+      title: 'Password Changed',
       message: 'Your account password has been changed. If you did not do this, please contact support immediately.',
     });
     return { message: messages.auth.passwordResetSuccess };
-  }
-
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
-  private signAccessToken(userId: string): string {
-    return this.jwt.sign({ sub: userId, type: 'access' }, { expiresIn: this.config.get('app.jwt.accessExpires', '15m'), secret: this.config.get('app.jwt.accessSecret') });
-  }
-
-  setAuthCookies(res: Response, accessToken: string, refreshToken: string, refreshExpiresAt: Date): void {
-    res.cookie('access_token', accessToken, { ...COOKIE_DEFAULTS, maxAge: 15 * 60 * 1000 });
-    res.cookie('refresh_token', refreshToken, { ...COOKIE_DEFAULTS, maxAge: refreshExpiresAt.getTime() - Date.now(), path: '/auth/refresh' });
-  }
-
-  clearAuthCookies(res: Response): void {
-    res.clearCookie('access_token', { ...COOKIE_DEFAULTS });
-    res.clearCookie('refresh_token', { ...COOKIE_DEFAULTS, path: '/auth/refresh' });
-  }
-
-  async issueTokens(userId: string, res: Response, ip?: string, ua?: string) {
-    const accessToken = this.signAccessToken(userId);
-    const raw = crypto.randomBytes(40).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(raw).digest('hex');
-    const days = this.config.get<number>('app.jwt.refreshExpiresDays', 7);
-    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    await this.repo.createRefreshToken({ user_id: userId, token_hash: tokenHash, expires_at: expiresAt, ip_address: ip, user_agent: ua });
-    this.setAuthCookies(res, accessToken, raw, expiresAt);
-    void this.notifications.send({
-      type:    'account.login_alert',
-      userId,
-      title:   'New Login Detected',
-      message: `Your account was accessed from${ip ? ` IP ${ip}` : ' a new device'}.`,
-      data:    { ip, userAgent: ua },
-    });
-    return { message: messages.auth.loginSuccess };
   }
 }

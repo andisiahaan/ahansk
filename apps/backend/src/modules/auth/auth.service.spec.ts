@@ -11,6 +11,9 @@ import { OtpService } from '../otp/otp.service';
 import { BanService } from '../users/ban.service';
 import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 
+import { AuthTokenService } from './auth-token.service';
+import { AuthEmailChangeService } from './auth-email-change.service';
+
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -46,6 +49,8 @@ describe('AuthService', () => {
   const mockNotifications = { sendToAdmins: jest.fn(), send: jest.fn() };
   const mockOtp = { sendOtp: jest.fn(), verifyOtp: jest.fn() };
   const mockBanService = { isUserBanned: jest.fn() };
+  const mockTokenService = { issueTokens: jest.fn(), refresh: jest.fn(), logout: jest.fn() };
+  const mockEmailChangeService = { requestEmailChange: jest.fn(), verifyEmailChange: jest.fn() };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -54,6 +59,8 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: AuthRepository, useValue: mockRepo },
+        { provide: AuthTokenService, useValue: mockTokenService },
+        { provide: AuthEmailChangeService, useValue: mockEmailChangeService },
         { provide: JwtService, useValue: mockJwt },
         { provide: ConfigService, useValue: mockConfig },
         { provide: EmailService, useValue: mockEmail },

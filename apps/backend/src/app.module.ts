@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvAdapter from '@keyv/redis';
@@ -92,6 +93,13 @@ import { AppService } from './app.service';
     OtpModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailProcessor],
+  providers: [
+    AppService,
+    EmailProcessor,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

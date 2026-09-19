@@ -3,6 +3,7 @@
   "stats": {
     "totalUsers": "Total Users",
     "newToday": "New Today",
+    "totalNews": "Total News",
     "totalPages": "Total Pages",
     "apiStatus": "API Status"
   },
@@ -10,6 +11,7 @@
   "quickLinks": {
     "title": "Quick Links",
     "manageUsers": "Manage Users",
+    "manageNews": "Manage News",
     "managePages": "Manage Pages",
     "appSettings": "App Settings",
     "online": "Online"

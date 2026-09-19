@@ -17,11 +17,33 @@ export class UsersRepository {
     return { data, total };
   }
 
+  async countAdmins(): Promise<number> {
+    return this.prisma.user.count({ where: { role: 'ADMIN', is_active: true } });
+  }
+
   async findById(id: string): Promise<UserSelect | null> {
     return this.prisma.user.findUnique({ 
       where: { id }, 
       omit: { password: true, totp_secret: true },
       include: { bans: { orderBy: { created_at: 'desc' } } } 
+    });
+  }
+
+  async findActiveById(id: string): Promise<(UserSelect & { bans: { id: string; expires_at: Date | null; unbanned_at: Date | null }[] }) | null> {
+    return this.prisma.user.findUnique({
+      where: { id, is_active: true },
+      omit: { password: true, totp_secret: true },
+      include: {
+        bans: {
+          where: {
+            unbanned_at: null,
+            OR: [
+              { expires_at: null },
+              { expires_at: { gt: new Date() } },
+            ],
+          },
+        },
+      },
     });
   }
 

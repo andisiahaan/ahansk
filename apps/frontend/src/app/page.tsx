@@ -40,7 +40,20 @@ export default function HomePage() {
       {/* Header / Nav */}
       <header className="absolute top-0 w-full z-50">
         <div className="mx-auto max-w-6xl p-6 flex justify-between items-center">
-          <Logo width={140} height={36} className="text-foreground" />
+          <div className="flex items-center gap-8">
+            <Logo width={140} height={36} className="text-foreground" />
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Features
+              </a>
+              <Link href="/pages/terms" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Terms
+              </Link>
+              <Link href="/pages/privacy" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Privacy
+              </Link>
+            </nav>
+          </div>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Sign In
@@ -90,7 +103,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Grid */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 pb-24">
+      <section id="features" className="relative z-10 max-w-6xl mx-auto px-4 pb-24 scroll-mt-24">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, idx) => (
             <div 

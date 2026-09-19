@@ -50,9 +50,9 @@ describe('NotificationService', () => {
 
   describe('getPreferences', () => {
     it('should return default preferences if none exist', async () => {
-      mockRepo.getUserPreferences.mockResolvedValue({ types: null, channels: null });
+      mockRepo.getUserPreferences.mockResolvedValue({ channels: null });
       const result = await service.getPreferences('1');
-      expect(result).toEqual({ types: {}, channels: {} });
+      expect(result).toEqual({ channels: {} });
     });
   });
 });

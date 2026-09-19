@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { User, Camera } from 'lucide-react';
-import api from '@/lib/api';
+import api, { getImageUrl } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +56,7 @@ export default function ProfileSettingsPage() {
     } finally { setLoading(false); }
   };
 
-  const avatarSrc = avatarPreview ?? profile?.avatar ?? null;
+  const avatarSrc = avatarPreview ?? getImageUrl(profile?.avatar) ?? null;
   const initials  = (profile?.name ?? 'U').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (

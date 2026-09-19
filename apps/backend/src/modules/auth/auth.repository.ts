@@ -183,4 +183,11 @@ export class AuthRepository {
   async deletePendingEmailChange(id: string) {
     await this.prisma.pendingEmailChange.delete({ where: { id } });
   }
+
+  async completeEmailChange(userId: string, pendingId: string, newEmail: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: userId }, data: { email: newEmail } }),
+      this.prisma.pendingEmailChange.delete({ where: { id: pendingId } }),
+    ]);
+  }
 }

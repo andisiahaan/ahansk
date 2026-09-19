@@ -8,9 +8,20 @@ import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 
+import { CreateUserModal } from './create-user-modal';
+
 interface User {
   id: string; name: string; email: string; role: string;
   is_active: boolean; email_verified_at: string | null;
+}
+
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 function Badge({ children, variant }: { children: React.ReactNode; variant: 'green' | 'red' | 'blue' | 'gray' }) {
@@ -29,22 +40,32 @@ export default function UsersPage() {
   const t = useTranslations('users');
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const fetchUsers = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await api.get<{ data: any }>('/users');
+      const res = await api.get<{ data: { items: User[]; meta: PaginationMeta } }>(`/admin/users?page=${page}&limit=20`);
       const payload = res.data.data;
-      setUsers(payload?.items ?? (Array.isArray(payload) ? payload : []));
+      if (payload && Array.isArray(payload.items)) {
+        setUsers(payload.items);
+        setMeta(payload.meta);
+      } else if (Array.isArray(payload)) {
+        setUsers(payload);
+        setMeta(null);
+      }
     } catch { toast.error(t('messages.loadFailed')); }
     finally { setLoading(false); }
-  }, [t]);
+  }, [page, t]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const toggleActive = async (id: string, is_active: boolean) => {
     try {
-      await api.patch(`/users/${id}`, { is_active: !is_active });
+      await api.patch(`/admin/users/${id}`, { is_active: !is_active });
       setUsers((p) => p.map((u) => u.id === id ? { ...u, is_active: !is_active } : u));
       toast.success(is_active ? t('messages.disabled') : t('messages.enabled'));
     } catch { toast.error(t('messages.updateFailed')); }
@@ -53,23 +74,27 @@ export default function UsersPage() {
   const deleteUser = async (id: string) => {
     if (!confirm(t('details.confirmDelete'))) return;
     try {
-      await api.delete(`/users/${id}`);
+      await api.delete(`/admin/users/${id}`);
       setUsers((p) => p.filter((u) => u.id !== id));
       toast.success(t('messages.deleted'));
+      void fetchUsers();
     } catch { toast.error(t('messages.deleteFailed')); }
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">{t('list.title')}</h1>
-        <span className="text-sm text-muted-foreground">{users.length} {t('list.total')}</span>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t('list.title')}</h1>
+          <p className="text-sm text-muted-foreground">{meta?.total ?? users.length} {t('list.total')}</p>
+        </div>
+        <Button onClick={() => setCreateModalOpen(true)}>+ Add User</Button>
       </div>
 
       {loading ? (
         <p className="text-sm text-muted-foreground animate-pulse">Loading…</p>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden overflow-x-auto">
+        <div className="border border-border rounded-xl overflow-hidden overflow-x-auto bg-card">
           <table className="w-full border-collapse min-w-[560px]">
             <thead className="bg-muted">
               <tr>
@@ -101,8 +126,38 @@ export default function UsersPage() {
               ))}
             </tbody>
           </table>
+
+          {meta && meta.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={!meta.hasPrev || loading}
+              >
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {meta.page} of {meta.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!meta.hasNext || loading}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       )}
+
+      <CreateUserModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreated={fetchUsers}
+      />
     </div>
   );
 }

@@ -1,37 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject } from '@nestjs/common';
-import type { Cache } from 'cache-manager';
-import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../cache/cache.service';
+import { SettingsRepository } from '../../modules/settings/settings.repository';
 import {
   SETTING_KEYS,
   DEFAULT_APP_SETTINGS,
   DEFAULT_AUTH_SETTINGS,
-  CACHE_KEY_SETTINGS,
 } from '@ahansk/shared';
 import type { SettingKey, SettingValueMap } from '@ahansk/shared';
+
+export const CACHE_KEY_SETTINGS_VALUES = (key: string) => `settings:values:${key}`;
+export const CACHE_KEY_SETTINGS_ENTITY = (key: string) => `settings:entity:${key}`;
 
 @Injectable()
 export class SettingsCache {
   constructor(
-    private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly repo: SettingsRepository,
+    private readonly cache: CacheService,
   ) {}
 
   async get<K extends SettingKey>(key: K): Promise<SettingValueMap[K]> {
-    const cacheKey = CACHE_KEY_SETTINGS(key);
+    const cacheKey = CACHE_KEY_SETTINGS_VALUES(key);
     const cached = await this.cache.get<SettingValueMap[K]>(cacheKey);
     if (cached) return cached;
 
-    const record = await this.prisma.setting.findUnique({ where: { key } });
+    const record = await this.repo.findByKey(key);
     const value = (record?.settings ?? this.getDefault(key)) as SettingValueMap[K];
 
-    await this.cache.set(cacheKey, value, 60 * 1000);
+    await this.cache.set(cacheKey, value, 60);
     return value;
   }
 
-  async invalidate(key: SettingKey): Promise<void> {
-    await this.cache.del(CACHE_KEY_SETTINGS(key));
+  async invalidate(key: string): Promise<void> {
+    await this.cache.del(CACHE_KEY_SETTINGS_VALUES(key));
+    await this.cache.del(CACHE_KEY_SETTINGS_ENTITY(key));
   }
 
   private getDefault(key: SettingKey): SettingValueMap[SettingKey] {

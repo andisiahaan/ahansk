@@ -11,12 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useRecaptcha } from '@/lib/use-recaptcha';
 import { RegisterSchema, type RegisterDto } from '@ahansk/shared';
 
 function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
   const nextUrl = params.get('next') ?? (process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard');
+  const { getRecaptchaToken } = useRecaptcha();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterDto>({
     resolver: zodResolver(RegisterSchema),
@@ -24,7 +26,8 @@ function RegisterForm() {
 
   const onSubmit = async (data: RegisterDto) => {
     try {
-      await api.post('/auth/register', { ...data, recaptchaToken: 'bypass-dev' });
+      const recaptchaToken = (await getRecaptchaToken('register')) ?? 'bypass-dev';
+      await api.post('/auth/register', { ...data, recaptchaToken });
       toast.success('Account created! Please check your email to verify.');
       setTimeout(() => router.push(`/login?next=${nextUrl}`), 2000);
     } catch (err: unknown) {

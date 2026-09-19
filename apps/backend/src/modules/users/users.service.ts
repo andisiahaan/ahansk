@@ -34,17 +34,32 @@ export class UsersService {
     return this.repo.createUser({ ...dto, password });
   }
 
-  async update(id: string, dto: UpdateUserDto) {
-    await this.findById(id);
-    const data: any = { ...dto };
-    if (data.password) {
+  async update(id: string, dto: UpdateUserDto, currentAdminId?: string) {
+    const user = await this.findById(id);
+    if (dto.role && dto.role !== 'ADMIN' && user.role === 'ADMIN') {
+      const adminCount = await this.repo.countAdmins();
+      if (adminCount <= 1) {
+        throw new BadRequestException('Cannot demote the last remaining administrator.');
+      }
+    }
+    const data: import('@prisma/client').Prisma.UserUpdateInput = { ...dto };
+    if (data.password && typeof data.password === 'string') {
       data.password = await argon2.hash(data.password);
     }
     return this.repo.updateUser(id, data);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.findById(id);
+  async delete(id: string, currentAdminId?: string): Promise<void> {
+    if (currentAdminId && id === currentAdminId) {
+      throw new BadRequestException('You cannot delete your own administrator account.');
+    }
+    const user = await this.findById(id);
+    if (user.role === 'ADMIN') {
+      const adminCount = await this.repo.countAdmins();
+      if (adminCount <= 1) {
+        throw new BadRequestException('Cannot delete the last remaining administrator.');
+      }
+    }
     await this.repo.deleteById(id);
   }
 

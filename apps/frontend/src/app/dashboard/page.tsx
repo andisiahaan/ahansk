@@ -25,10 +25,10 @@ async function getMe(): Promise<Me | null> {
 
 async function getUnreadCount(): Promise<number> {
   try {
-    const res = await apiFetch('/notifications?isRead=false&limit=1');
+    const res = await apiFetch('/notifications/unread-count');
     if (!res.ok) return 0;
-    const data = await res.json();
-    return data.meta?.total ?? 0;
+    const json = await res.json();
+    return json.data?.count ?? 0;
   } catch { return 0; }
 }
 

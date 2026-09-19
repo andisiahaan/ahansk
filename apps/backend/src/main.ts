@@ -8,6 +8,8 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ZodValidationPipe } from './common/pipes/zod-validation.pipe';
 import helmet from 'helmet';
+import * as crypto from 'crypto';
+import type { Request, Response, NextFunction } from 'express';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -23,10 +25,10 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
 
   // ─── CSRF Token Middleware (Double Submit Cookie) ───────────────────────────
-  app.use((req: any, res: any, next: () => void) => {
-    let csrfToken = req.cookies['csrf_token'];
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    let csrfToken = req.cookies?.['csrf_token'];
     if (!csrfToken) {
-      csrfToken = require('crypto').randomBytes(32).toString('hex');
+      csrfToken = crypto.randomBytes(32).toString('hex');
       res.cookie('csrf_token', csrfToken, {
         httpOnly: false, // Must be readable by frontend JS
         secure: process.env.NODE_ENV === 'production',
@@ -37,8 +39,18 @@ async function bootstrap(): Promise<void> {
 
     // Require CSRF token on state-changing requests
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+      if (req.path.startsWith('/webhooks/')) {
+        return next();
+      }
+
       const tokenInHeader = req.headers['x-csrf-token'];
-      if (!tokenInHeader || tokenInHeader !== csrfToken) {
+      if (typeof tokenInHeader !== 'string' || typeof csrfToken !== 'string') {
+        return res.status(403).json({ success: false, message: 'Invalid CSRF Token' });
+      }
+
+      const bufHeader = Buffer.from(tokenInHeader);
+      const bufCookie = Buffer.from(csrfToken);
+      if (bufHeader.length !== bufCookie.length || !crypto.timingSafeEqual(bufHeader, bufCookie)) {
         return res.status(403).json({ success: false, message: 'Invalid CSRF Token' });
       }
     }

@@ -13,8 +13,8 @@ interface AdminNotifPage { items: AdminNotif[]; meta: { total: number } }
 interface BroadcastDto { type: NotificationType; title: string; message: string; target: 'all' | 'admins' }
 
 async function fetchAll(page: number): Promise<AdminNotifPage> {
-  const res = await api.get<AdminNotifPage>(`/admin/notifications?page=${page}&limit=20`);
-  return res.data;
+  const res = await api.get<{ data: AdminNotifPage }>(`/admin/notifications?page=${page}&limit=20`);
+  return res.data.data;
 }
 
 async function broadcast(dto: BroadcastDto): Promise<void> {

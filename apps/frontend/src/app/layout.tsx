@@ -5,6 +5,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 import { IntlProvider } from '@/providers/intl-provider';
+import { RecaptchaProvider } from '@/providers/recaptcha-provider';
 import { Toaster } from '@/components/ui/toast';
 import './globals.css';
 
@@ -49,12 +50,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="antialiased">
         <IntlProvider locale={locale} messages={messages}>
           <QueryProvider>
-            <ThemeProvider>
-              <AuthProvider isLoggedIn={isLoggedIn}>
-                {children}
-                <Toaster />
-              </AuthProvider>
-            </ThemeProvider>
+            <RecaptchaProvider>
+              <ThemeProvider>
+                <AuthProvider isLoggedIn={isLoggedIn}>
+                  {children}
+                  <Toaster />
+                </AuthProvider>
+              </ThemeProvider>
+            </RecaptchaProvider>
           </QueryProvider>
         </IntlProvider>
       </body>

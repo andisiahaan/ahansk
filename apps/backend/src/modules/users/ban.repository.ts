@@ -48,6 +48,11 @@ export class BanRepository {
       this.prisma.userBan.create({
         data: { user_id: userId, banned_by: adminId, reason, expires_at: expiresAt ?? null },
       }),
+      // Revoke all active refresh tokens for this banned user immediately
+      this.prisma.refreshToken.updateMany({
+        where: { user_id: userId, revoked_at: null },
+        data: { revoked_at: new Date() },
+      }),
     ]);
   }
 

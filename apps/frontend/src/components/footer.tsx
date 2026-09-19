@@ -13,7 +13,14 @@ export function Footer() {
           <div className="text-xs text-muted-foreground flex flex-col sm:flex-row gap-2 sm:gap-6 items-center">
             <p>© {new Date().getFullYear()} Ahansk. All rights reserved.</p>
             <p className="hidden sm:block">•</p>
-            <p>Built with NestJS, Next.js & Prisma.</p>
+            <div className="flex gap-4">
+              <Link href="/pages/terms" className="hover:text-foreground transition-colors">
+                Terms of Service
+              </Link>
+              <Link href="/pages/privacy" className="hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -13,6 +13,9 @@ import { OtpModule } from '../otp/otp.module';
 import { UsersModule } from '../users/users.module';
 import { QUEUE_EMAIL } from '@ahansk/shared';
 
+import { AuthTokenService } from './auth-token.service';
+import { AuthEmailChangeService } from './auth-email-change.service';
+
 @Module({
   imports: [
     PassportModule,
@@ -23,7 +26,15 @@ import { QUEUE_EMAIL } from '@ahansk/shared';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthTotpService, AuthRepository, JwtStrategy, EmailService],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    AuthTotpService,
+    AuthTokenService,
+    AuthEmailChangeService,
+    AuthRepository,
+    JwtStrategy,
+    EmailService,
+  ],
+  exports: [AuthService, AuthTokenService, AuthEmailChangeService],
 })
 export class AuthModule {}

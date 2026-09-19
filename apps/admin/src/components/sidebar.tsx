@@ -12,6 +12,7 @@ const NAV: NavItem[] = [
   { href: '/',            icon: '◈', label: 'Dashboard' },
   { href: '/users',       icon: '웃', label: 'Users' },
   { href: '/news',        icon: '⚐', label: 'News' },
+  { href: '/notifications', icon: '🔔', label: 'Notifications' },
   { href: '/settings',    icon: '⊙', label: 'Settings' },
 ];
 

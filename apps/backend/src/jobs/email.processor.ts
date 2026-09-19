@@ -30,6 +30,8 @@ export class EmailProcessor extends WorkerHost {
         await this.sendVerification(data.to, data.name, data.token);
       } else if (data.type === 'password-reset') {
         await this.sendPasswordReset(data.to, data.name, data.token);
+      } else if (data.type === 'otp') {
+        await this.sendOtp(data.to, data.name, data.code, data.purpose);
       }
     } catch (err) {
       this.logger.error(`Failed to send email [${data.type}] to ${data.to}`, err);
@@ -39,7 +41,7 @@ export class EmailProcessor extends WorkerHost {
 
   private async sendVerification(to: string, name: string, token: string): Promise<void> {
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
-    const link = `${frontendUrl}/auth/verify-email?token=${token}`;
+    const link = `${frontendUrl}/verify-email?token=${token}`;
     await this.transporter.sendMail({
       from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
@@ -50,12 +52,21 @@ export class EmailProcessor extends WorkerHost {
 
   private async sendPasswordReset(to: string, name: string, token: string): Promise<void> {
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
-    const link = `${frontendUrl}/auth/reset-password?token=${token}`;
+    const link = `${frontendUrl}/reset-password?token=${token}`;
     await this.transporter.sendMail({
       from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
       subject: 'Reset your password',
       html: `<p>Hello ${name},</p><p>Click <a href="${link}">here</a> to reset your password.</p><p>This link expires in 1 hour.</p>`,
+    });
+  }
+
+  private async sendOtp(to: string, name: string, code: string, purpose: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
+      to,
+      subject: `Your OTP Code for ${purpose}`,
+      html: `<p>Hello ${name},</p><p>Your one-time verification code for <strong>${purpose}</strong> is:</p><h2 style="letter-spacing: 4px;">${code}</h2><p>This code expires in 10 minutes. Do not share this code with anyone.</p>`,
     });
   }
 }

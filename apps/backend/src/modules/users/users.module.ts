@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { UsersController } from './users.controller';
+import { UsersAdminController } from './users.admin.controller';
 import { UsersService } from './users.service';
 import { UsersRepository } from './users.repository';
 import { BanService } from './ban.service';
@@ -21,8 +22,8 @@ import { AuthRepository } from '../auth/auth.repository';
       },
     }),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, UsersAdminController],
   providers: [UsersService, UsersRepository, AuthRepository, BanService, BanRepository],
-  exports: [BanService],
+  exports: [BanService, UsersRepository, UsersService],
 })
 export class UsersModule {}

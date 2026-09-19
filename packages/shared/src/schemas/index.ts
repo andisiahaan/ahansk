@@ -79,6 +79,7 @@ export const AuthUserSchema = z.object({
   name: z.string(),
   role: z.enum(['ADMIN', 'USER']),
   twoFactorEnabled: z.boolean(),
+  avatar: z.string().nullable().optional(),
 });
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 

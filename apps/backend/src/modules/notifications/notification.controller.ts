@@ -3,23 +3,13 @@ import {
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import type { AuthUser, PushSubscriptionPayload, NotificationPreferences } from '@ahansk/shared';
-import { z } from 'zod';
-import { buildPaginationMeta } from '@ahansk/shared';
-
-const PushSubSchema = z.object({
-  endpoint:  z.string().url(),
-  p256dh:    z.string().min(1),
-  auth:      z.string().min(1),
-  userAgent: z.string().optional(),
-});
-
-const PreferencesSchema = z.object({
-  channels: z.record(z.string(), z.boolean()),
-});
-
-const UnsubSchema = z.object({ endpoint: z.string().url() });
+import type { AuthUser } from '@ahansk/shared';
+import {
+  PushSubscriptionDto,
+  NotificationPreferencesDto,
+  PushUnsubscribeDto,
+  ListNotificationQueryDto,
+} from './notification.dto';
 
 @Controller('notifications')
 export class NotificationController {
@@ -28,16 +18,13 @@ export class NotificationController {
   @Get()
   async list(
     @CurrentUser() user: AuthUser,
-    @Query('page')     page?:     string,
-    @Query('limit')    limit?:    string,
-    @Query('category') category?: string,
-    @Query('isRead')   isRead?:   string,
+    @Query() query: ListNotificationQueryDto,
   ) {
     const filter = {
-      page:     Number(page)  || 1,
-      limit:    Number(limit) || 20,
-      category: category || undefined,
-      isRead:   isRead !== undefined ? isRead === 'true' : undefined,
+      page:     query.page  || 1,
+      limit:    query.limit || 20,
+      category: query.category,
+      isRead:   query.isRead,
     };
     return this.svc.getForUser(user.id, filter);
   }
@@ -70,9 +57,9 @@ export class NotificationController {
   @HttpCode(HttpStatus.OK)
   async savePreferences(
     @CurrentUser() user: AuthUser,
-    @Body(new ZodValidationPipe(PreferencesSchema)) dto: NotificationPreferences,
+    @Body() dto: NotificationPreferencesDto,
   ) {
-    await this.svc.savePreferences(user.id, dto);
+    await this.svc.savePreferences(user.id, dto as unknown as import('@ahansk/shared').NotificationPreferences);
     return { message: 'Preferences saved' };
   }
 
@@ -80,7 +67,7 @@ export class NotificationController {
   @HttpCode(HttpStatus.OK)
   async subscribe(
     @CurrentUser() user: AuthUser,
-    @Body(new ZodValidationPipe(PushSubSchema)) dto: PushSubscriptionPayload,
+    @Body() dto: PushSubscriptionDto,
   ) {
     await this.svc.subscribePush(user.id, dto);
     return { message: 'Subscribed' };
@@ -102,7 +89,7 @@ export class NotificationController {
   @HttpCode(HttpStatus.OK)
   async unsubscribe(
     @CurrentUser() user: AuthUser,
-    @Body(new ZodValidationPipe(UnsubSchema)) body: { endpoint: string },
+    @Body() body: PushUnsubscribeDto,
   ) {
     await this.svc.unsubscribePush(user.id, body.endpoint);
     return { message: 'Unsubscribed' };

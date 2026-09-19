@@ -52,7 +52,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
   const fetchUser = useCallback(async () => {
     try {
-      const { data } = await api.get(`/users/${id}`);
+      const { data } = await api.get(`/admin/users/${id}`);
       const u = data.data;
       setUser(u);
       setEditName(u.name);
@@ -82,7 +82,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         is_active: editIsActive,
       };
       if (editPassword) payload['password'] = editPassword;
-      await api.patch(`/users/${id}`, payload);
+      await api.patch(`/admin/users/${id}`, payload);
       toast.success(t('messages.updated') || 'User updated successfully');
       setEditPassword('');
       await fetchUser();
@@ -98,7 +98,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (!banReason.trim()) return;
     setIsBanning(true);
     try {
-      await api.post(`/users/${id}/ban`, {
+      await api.post(`/admin/users/${id}/ban`, {
         reason: banReason,
         expires_at: banExpiresAt ? new Date(banExpiresAt).toISOString() : null,
       });
@@ -117,7 +117,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const handleUnban = async () => {
     if (!confirm(t('details.confirmLift'))) return;
     try {
-      await api.post(`/users/${id}/unban`);
+      await api.post(`/admin/users/${id}/unban`);
       toast.success(t('messages.unbanSuccess'));
       await fetchUser();
     } catch (err: unknown) {
@@ -128,7 +128,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const handleDelete = async () => {
     if (!confirm(`Permanently delete user "${user?.name}"? This action cannot be undone.`)) return;
     try {
-      await api.delete(`/users/${id}`);
+      await api.delete(`/admin/users/${id}`);
       toast.success('User deleted.');
       router.push('/users');
     } catch (err: unknown) {

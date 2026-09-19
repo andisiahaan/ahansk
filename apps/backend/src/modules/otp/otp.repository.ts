@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
 import * as crypto from 'crypto';
 
 export interface OtpResult {
@@ -10,10 +11,19 @@ export interface OtpResult {
 
 @Injectable()
 export class OtpRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly MAX_ATTEMPTS = 5;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   private hashCode(code: string): string {
     return crypto.createHash('sha256').update(code).digest('hex');
+  }
+
+  private getAttemptCacheKey(userId: string, purpose: string): string {
+    return `otp:attempts:${userId}:${purpose}`;
   }
 
   /** Hapus OTP lama untuk purpose yang sama, lalu buat yang baru */
@@ -24,8 +34,9 @@ export class OtpRepository {
     ttlMinutes = 10,
   ): Promise<OtpResult> {
     await this.prisma.otp.deleteMany({ where: { user_id: userId, purpose } });
+    await this.cacheService.del(this.getAttemptCacheKey(userId, purpose));
 
-    const code      = String(Math.floor(100000 + Math.random() * 900000));
+    const code      = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + ttlMinutes * 60_000);
 
     await this.prisma.otp.create({
@@ -35,16 +46,29 @@ export class OtpRepository {
     return { code, expiresAt, cooldownSeconds: 0 };
   }
 
-  /** Verify OTP — hapus setelah berhasil (delete-on-use) */
+  /** Verify OTP — hapus setelah berhasil (delete-on-use), batasi percobaan gagal maksimal 5 kali */
   async verify(userId: string, purpose: string, code: string, identifier?: string): Promise<boolean> {
+    const attemptKey = this.getAttemptCacheKey(userId, purpose);
+    const attempts = (await this.cacheService.get<number>(attemptKey)) ?? 0;
+
+    if (attempts >= this.MAX_ATTEMPTS) {
+      await this.prisma.otp.deleteMany({ where: { user_id: userId, purpose } });
+      await this.cacheService.del(attemptKey);
+      return false;
+    }
+
     const hash = this.hashCode(code.trim());
     const otp  = await this.prisma.otp.findFirst({
       where: { user_id: userId, purpose, code_hash: hash, expires_at: { gt: new Date() } },
     });
-    if (!otp) return false;
-    if (identifier && otp.identifier !== identifier) return false;
+
+    if (!otp || (identifier && otp.identifier !== identifier)) {
+      await this.cacheService.set(attemptKey, attempts + 1, 600);
+      return false;
+    }
 
     await this.prisma.otp.delete({ where: { id: otp.id } });
+    await this.cacheService.del(attemptKey);
     return true;
   }
 
@@ -61,5 +85,6 @@ export class OtpRepository {
 
   async deleteAllForUser(userId: string, purpose: string): Promise<void> {
     await this.prisma.otp.deleteMany({ where: { user_id: userId, purpose } });
+    await this.cacheService.del(this.getAttemptCacheKey(userId, purpose));
   }
 }

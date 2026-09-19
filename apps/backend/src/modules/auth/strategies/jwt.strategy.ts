@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
-import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
+import { UsersRepository } from '../../users/users.repository';
 import type { AuthUser } from '@ahansk/shared';
 
 interface JwtPayload {
@@ -24,7 +24,7 @@ function cookieOrBearerExtractor(req: Request): string | null {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     config: ConfigService,
-    private readonly prisma: PrismaService,
+    private readonly usersRepo: UsersRepository,
   ) {
     super({
       jwtFromRequest: cookieOrBearerExtractor,
@@ -38,12 +38,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Partial token cannot access this resource');
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub, is_active: true },
-      select: { id: true, email: true, name: true, role: true, totp_enabled: true },
-    });
+    const user = await this.usersRepo.findActiveById(payload.sub);
 
     if (!user) throw new UnauthorizedException('User not found or inactive');
+
+    if (user.bans && user.bans.length > 0) {
+      throw new UnauthorizedException('Account has been suspended');
+    }
 
     return {
       id: user.id,
@@ -51,6 +52,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       name: user.name,
       role: user.role,
       twoFactorEnabled: user.totp_enabled,
+      avatar: user.avatar,
     };
   }
 }

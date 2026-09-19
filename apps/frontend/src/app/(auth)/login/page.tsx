@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useRecaptcha } from '@/lib/use-recaptcha';
 
 // ─── TOTP sub-form ─────────────────────────────────────────────────────────────
 const TotpSchema = z.object({ code: z.string().min(6).max(11, 'Invalid code format') });
@@ -67,13 +68,16 @@ function LoginForm() {
   const fetchMe = useAuthStore((s) => s.fetchMe);
   const [twoFactor, setTwoFactor] = useState<{ partial: string } | null>(null);
 
+  const { getRecaptchaToken } = useRecaptcha();
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginDto>({
     resolver: zodResolver(LoginSchema),
   });
 
   const onSubmit = async (data: LoginDto) => {
     try {
-      const { data: res } = await api.post('/auth/login', { ...data, recaptchaToken: 'bypass-dev' });
+      const recaptchaToken = (await getRecaptchaToken('login')) ?? 'bypass-dev';
+      const { data: res } = await api.post('/auth/login', { ...data, recaptchaToken });
       if (res.data.requiresTwoFactor) {
         setTwoFactor({ partial: res.data.partialToken });
       } else {
