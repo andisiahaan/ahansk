@@ -12,8 +12,8 @@
 const dotenv = require('dotenv');
 
 // Load environment variables for each app explicitly
-const backendEnv = dotenv.config({ path: './apps/backend/.env' }).parsed || {};
-const frontendEnv = dotenv.config({ path: './apps/frontend/.env' }).parsed || {};
+const apiEnv = dotenv.config({ path: './apps/api/.env' }).parsed || {};
+const webEnv = dotenv.config({ path: './apps/web/.env' }).parsed || {};
 const adminEnv = dotenv.config({ path: './apps/admin/.env' }).parsed || {};
 
 module.exports = {
@@ -22,31 +22,31 @@ module.exports = {
     // Backend API  →  api.ahansk.com
     // ─────────────────────────────────────────────────────────────
     {
-      name:               'ahansk-backend',
-      cwd:                './apps/backend',
+      name:               'ahansk-api',
+      cwd:                './apps/api',
       script:             'dist/main.js',
       instances:          2,
       exec_mode:          'cluster',
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
-        PORT: backendEnv.PORT || 10311,
+        PORT: apiEnv.PORT || 10311,
       },
     },
 
     // ─────────────────────────────────────────────────────────────
-    // Frontend  →  ahansk.com  (or your domain)
+    // Web User-Facing  →  ahansk.com  (or your domain)
     // ─────────────────────────────────────────────────────────────
     {
-      name:               'ahansk-frontend',
-      cwd:                './apps/frontend',
+      name:               'ahansk-web',
+      cwd:                './apps/web',
       script:             'node_modules/next/dist/bin/next',
       args:               'start',
       interpreter:        'node',
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
-        PORT: frontendEnv.PORT || 10312,
+        PORT: webEnv.PORT || 10312,
       },
     },
 

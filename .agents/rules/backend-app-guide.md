@@ -7,6 +7,8 @@ description: Standar dan aturan khusus NestJS backend — routing, auth, validas
 
 # Backend App Guide — NestJS
 
+App: `apps/api` — domain `api.domain.com`
+
 ## Stack & Library
 
 - **ORM**: Prisma — akses DB **hanya** lewat `*.repository.ts`, bukan dari service/controller langsung.
@@ -31,7 +33,7 @@ description: Standar dan aturan khusus NestJS backend — routing, auth, validas
 
 - **Tidak ada prefix `/api`**. Backend di domain `api.domain.com`.
 - Route structure:
-  - (tanpa prefix) → route internal untuk Frontend user-facing
+  - (tanpa prefix) → route internal untuk Frontend user-facing (`apps/web`)
   - `/admin/*` → route untuk Admin Panel. **Prefix ini hanya di backend** — halaman Next.js admin tidak pakai `/admin/` di URL.
   - `/v1/*` → external API, auth pakai Personal Access Token
   - `/webhooks/*` → selalu POST, wajib verifikasi signature, tanpa CORS
@@ -72,11 +74,13 @@ Error handling lewat **Exception Filter global** (`http-exception.filter.ts`).
 ## Auth Token Strategy (Cookie-based)
 
 - **Access token**: JWT, httpOnly cookie `access_token`, 15 menit.
-- **Refresh token**: random 40-byte hex, httpOnly cookie `refresh_token` (path `/auth/refresh`), 7 hari. Hash SHA-256 di DB.
-- `jwt.strategy.ts` ekstrak dari cookie `access_token` dulu, fallback ke `Authorization: Bearer`.
-- Logout: `res.clearCookie()` keduanya.
+- **Refresh token**: random 40-byte hex, httpOnly cookie `refresh_token` (path `/`), 7 hari. Hash SHA-256 di DB.
+- Pengaturan cookie disentralisasi di `auth-cookie.helper.ts` (SSOT) agar konsisten di seluruh endpoint auth.
+- `JwtAuthGuard` secara otomatis mencoba silent refresh jika access token kedaluwarsa tetapi cookie `refresh_token` masih valid.
+- `jwt.strategy.ts` mengekstrak dari cookie `access_token` dulu, fallback ke `Authorization: Bearer`.
+- Logout: `clearAuthCookies` membersihkan kedua cookie (termasuk legacy path `/auth/refresh`).
 - Frontend/Admin **tidak boleh simpan token di localStorage**.
-- **CSRF Protection**: Semua request yang merubah state (POST, PUT, PATCH, DELETE) **wajib** menyertakan header `X-CSRF-Token` yang nilainya sama dengan cookie `csrf_token` (Double-Submit Cookie). Middleware untuk ini dikonfigurasi di `main.ts`.
+- **CSRF Protection**: Semua request yang merubah state (POST, PUT, PATCH, DELETE) **wajib** menyertakan header `X-CSRF-Token` yang nilainya sama dengan cookie `csrf_token` (Double-Submit Cookie). Pengecekan CSRF dikecualikan khusus untuk endpoint `/auth/refresh`.
 
 ## Caching
 

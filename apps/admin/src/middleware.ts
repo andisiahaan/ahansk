@@ -6,18 +6,20 @@ const PUBLIC_PATHS = ['/auth'];
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const token = req.cookies.get('access_token')?.value;
+  const accessToken = req.cookies.get('access_token')?.value;
+  const refreshToken = req.cookies.get('refresh_token')?.value;
+  const hasSession = Boolean(accessToken || refreshToken);
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
-  if (!isPublic && !token) {
+  if (!isPublic && !hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('from', pathname);
     return NextResponse.redirect(url);
   }
 
-  if (pathname.startsWith('/auth') && token) {
+  if (pathname.startsWith('/auth') && hasSession) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 

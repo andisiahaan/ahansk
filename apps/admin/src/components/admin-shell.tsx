@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Sidebar } from '@/components/sidebar';
 import { useAdminAuthStore } from '@/stores/auth.store';
 import { AccountDropdown } from '@/components/account-dropdown';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { useState } from 'react';
 
 const PUBLIC_PATHS = ['/auth'];
 
@@ -19,6 +19,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
 function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const t = useTranslations('nav');
   const { user, fetchMe, logout } = useAdminAuthStore();
   const hydrated = useRef(false);
   const [error, setError] = useState(false);
@@ -36,17 +37,21 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">{t('access_denied')}</h1>
         <p className="text-muted-foreground text-sm mb-6 max-w-sm">
-          You are currently signed in, but you do not have administrator privileges or your session has expired.
+          {t('access_denied_desc')}
         </p>
         <button
           onClick={() => {
-            logout().then(() => window.location.href = '/auth/login');
+            logout().finally(() => {
+              fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+                window.location.href = '/auth/login';
+              });
+            });
           }}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          Sign out & Switch Account
+          {t('sign_out_switch')}
         </button>
       </div>
     );
@@ -54,7 +59,7 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
 
   if (!user) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <span className="text-sm text-muted-foreground animate-pulse">Loading…</span>
+      <span className="text-sm text-muted-foreground animate-pulse">{t('loading')}</span>
     </div>
   );
 
@@ -63,13 +68,13 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 md:ml-[var(--sidebar-w)]">
         <header className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 h-14 border-b border-border bg-card">
-          <span className="font-semibold text-sm text-foreground ml-12 md:ml-0">Admin Panel</span>
+          <span className="font-semibold text-sm text-foreground ml-12 md:ml-0">{t('admin_panel')}</span>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <AccountDropdown />
           </div>
         </header>
-        <div className="flex-1 p-4 sm:p-6">{children}</div>
+        <main className="flex-1 overflow-x-hidden w-full">{children}</main>
       </div>
     </div>
   );

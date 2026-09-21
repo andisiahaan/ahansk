@@ -23,9 +23,9 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 
 | Layer | Pilihan |
 |---|---|
-| Backend | NestJS |
-| Frontend (user-facing) | Next.js App Router |
-| Admin | Next.js App Router |
+| Backend (API) | NestJS (`apps/api`) |
+| Frontend (Web) | Next.js App Router (`apps/web`) |
+| Admin | Next.js App Router (`apps/admin`) |
 | ORM | Prisma (MySQL/MariaDB) |
 | Package manager | pnpm workspaces |
 | Task orchestrator | Turborepo (Full Monorepo) |
@@ -38,8 +38,8 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 
 ```
 apps/
-  backend/    → NestJS (port 10311)
-  frontend/   → Next.js user-facing (port 10312)
+  api/        → NestJS (port 10311)
+  web/        → Next.js user-facing (port 10312)
   admin/      → Next.js admin panel (port 10313)
 packages/
   shared/     → Zod schemas, types, constants, i18n localeRegistry, pagination utils
@@ -55,8 +55,8 @@ packages/
 ## Deployment
 
 - PM2 via `ecosystem.config.js` di root monorepo.
-- Backend production: cluster mode.
-- Frontend & Admin production: `script: 'node_modules/.bin/next'`, `args: 'start'`.
+- API (Backend) production: cluster mode.
+- Web & Admin production: `script: 'node_modules/.bin/next'`, `args: 'start'`.
 
 ## Hal yang SELALU DILARANG (lintas semua app)
 

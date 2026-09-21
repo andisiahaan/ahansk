@@ -43,10 +43,11 @@ describe('SettingsService', () => {
       expect(mockRepo.findByKey).not.toHaveBeenCalled();
     });
 
-    it('should throw NotFoundException if not in cache or db', async () => {
+    it('should return default settings if not in cache or db', async () => {
       mockCache.get.mockResolvedValue(null);
       mockRepo.findByKey.mockResolvedValue(null);
-      await expect(service.getByKey('test')).rejects.toThrow(NotFoundException);
+      const result = await service.getByKey('test');
+      expect(result).toEqual({ key: 'test', settings: {} });
     });
   });
 });

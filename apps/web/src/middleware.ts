@@ -8,13 +8,15 @@ const DASHBOARD_PATH = process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard';
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const token = req.cookies.get('access_token')?.value;
+  const accessToken = req.cookies.get('access_token')?.value;
+  const refreshToken = req.cookies.get('refresh_token')?.value;
+  const hasSession = Boolean(accessToken || refreshToken);
 
   const isPublic   = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
   const isDashboard = pathname === DASHBOARD_PATH || pathname.startsWith(DASHBOARD_PATH + '/');
 
   // Protect dashboard routes — redirect unauthenticated users to login
-  if (isDashboard && !token) {
+  if (isDashboard && !hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
@@ -22,7 +24,7 @@ export default function middleware(req: NextRequest) {
   }
 
   // Redirect logged-in users away from auth pages
-  if (isPublic && token && ['/login', '/register'].includes(pathname)) {
+  if (isPublic && hasSession && ['/login', '/register'].includes(pathname)) {
     return NextResponse.redirect(new URL(DASHBOARD_PATH, req.url));
   }
 

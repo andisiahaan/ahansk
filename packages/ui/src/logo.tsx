@@ -12,9 +12,9 @@ interface LogoProps {
 }
 
 /**
- * Brand logo component — always serves from frontend root /logo.png.
- * SSOT: logo lives only in apps/frontend/public/logo.png
- * Both frontend and admin consume the same asset via absolute URL.
+ * Brand logo component — always serves from web root /logo.png.
+ * SSOT: logo lives only in apps/web/public/logo.png
+ * Both web and admin consume the same asset via absolute URL.
  */
 export function Logo({
   frontendUrl,

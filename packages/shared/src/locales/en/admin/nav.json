@@ -4,5 +4,10 @@
   "news": "News",
   "settings": "Settings",
   "logout": "Logout",
-  "profile": "My Profile"
+  "profile": "My Profile",
+  "admin_panel": "Admin Panel",
+  "access_denied": "Access Denied",
+  "access_denied_desc": "You are currently signed in, but you do not have administrator privileges or your session has expired.",
+  "sign_out_switch": "Sign out & Switch Account",
+  "loading": "Loading…"
 }

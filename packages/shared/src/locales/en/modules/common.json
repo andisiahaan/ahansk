@@ -30,8 +30,10 @@
     "previous": "Previous",
     "next": "Next",
     "showing": "Showing {from}–{to} of {total}",
+    "pageOf": "Page {page} of {totalPages}",
     "perPage": "Per page",
-    "goToPage": "Go to page"
+    "goToPage": "Go to page",
+    "go": "Go"
   },
   "status": {
     "active": "Active",

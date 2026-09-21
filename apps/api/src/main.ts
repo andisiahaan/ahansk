@@ -7,6 +7,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ZodValidationPipe } from './common/pipes/zod-validation.pipe';
+import { AuthService } from './modules/auth/auth.service';
 import helmet from 'helmet';
 import * as crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
@@ -47,6 +48,9 @@ async function bootstrap(): Promise<void> {
       if (req.path.startsWith('/webhooks/')) {
         return next();
       }
+      if (['/auth/refresh', '/auth/refresh/'].includes(req.path)) {
+        return next();
+      }
 
       const tokenInHeader = req.headers['x-csrf-token'];
       if (typeof tokenInHeader !== 'string' || typeof csrfToken !== 'string') {
@@ -76,7 +80,8 @@ async function bootstrap(): Promise<void> {
 
   // ─── Global Guards ──────────────────────────────────────────────────────────
   const reflector = app.get(Reflector);
-  app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
+  const authService = app.get(AuthService);
+  app.useGlobalGuards(new JwtAuthGuard(reflector, authService), new RolesGuard(reflector));
 
   // ─── Global Filters ─────────────────────────────────────────────────────────
   app.useGlobalFilters(new HttpExceptionFilter());

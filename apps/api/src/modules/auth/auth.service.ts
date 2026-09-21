@@ -23,6 +23,7 @@ import { messages, SETTING_KEYS } from '@ahansk/shared';
 import type {
   RegisterDto, LoginDto, GoogleAuthDto,
   ForgotPasswordDto, ResetPasswordDto,
+  AuthUser,
   RequestEmailChangeDto, VerifyEmailChangeOtpDto,
 } from '@ahansk/shared';
 
@@ -177,6 +178,10 @@ export class AuthService {
 
   async refresh(rawToken: string, res: Response, ip?: string, ua?: string) {
     return this.tokenService.refresh(rawToken, res, ip, ua);
+  }
+
+  async refreshSilently(rawToken: string, req: any, res: Response): Promise<AuthUser | null> {
+    return this.tokenService.refreshSilently(rawToken, req, res);
   }
 
   async logout(res: Response): Promise<void> {

@@ -16,8 +16,10 @@ export class UsersService {
     private readonly storage:  StorageService,
   ) {}
 
-  async findAll(page = 1, limit = 20) {
-    const result = await this.repo.findAll(page, limit);
+  async findAll(query: import('./users.dto').UserQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const result = await this.repo.findAll(query);
     return { items: result.data, meta: buildPaginationMeta(result.total, page, limit) };
   }
 

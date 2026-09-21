@@ -29,7 +29,15 @@ api.interceptors.request.use(async (config) => {
 
 // ─── Response: auto-refresh on 401 ────────────────────────────────────────────
 let isRefreshing = false;
-let queue: Array<() => void> = [];
+let queue: Array<{ resolve: () => void; reject: (err: unknown) => void }> = [];
+
+function flushQueue(error?: unknown) {
+  queue.forEach(({ resolve, reject }) => {
+    if (error) reject(error);
+    else resolve();
+  });
+  queue = [];
+}
 
 api.interceptors.response.use(
   (res) => res,
@@ -41,21 +49,34 @@ api.interceptors.response.use(
     if (err.response?.status !== 401 || orig._retry || isAuthEndpoint) return Promise.reject(err);
 
     if (isRefreshing) {
-      return new Promise((resolve) => queue.push(() => resolve(api(orig))));
+      return new Promise((resolve, reject) => {
+        queue.push({ resolve: () => resolve(undefined), reject });
+      }).then(() => {
+        orig._retry = true;
+        return api(orig);
+      });
     }
 
     orig._retry = true;
     isRefreshing = true;
     try {
       await api.post('/auth/refresh');
-      queue.forEach((cb) => cb());
-      queue = [];
+      flushQueue();
       return api(orig);
-    } catch {
-      queue = [];
-      if (typeof window !== 'undefined') window.location.href = '/auth/login';
+    } catch (refreshErr: any) {
+      flushQueue(refreshErr);
+      const status = refreshErr?.response?.status;
+      if (status === 401 || status === 403) {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+          fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+            window.location.href = '/auth/login';
+          });
+        }
+      }
       return Promise.reject(err);
-    } finally { isRefreshing = false; }
+    } finally {
+      isRefreshing = false;
+    }
   },
 );
 

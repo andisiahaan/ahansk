@@ -13,7 +13,7 @@ describe('NotificationController (e2e)', () => {
   let adminCsrfToken: string;
   let userCsrfToken: string;
   
-  let userId: string;
+  let userId: number;
 
   beforeAll(async () => {
     const setup = await setupE2EApp();
@@ -30,7 +30,7 @@ describe('NotificationController (e2e)', () => {
     const user = await prisma.user.create({
       data: { email: 'e2e_notif_user@example.com', name: 'User', password: passwordHash, role: 'USER', email_verified_at: new Date(), is_active: true }
     });
-    userId = user.id;
+    userId = Number(user.id);
 
     adminAgent = request.agent(app.getHttpServer());
     userAgent = request.agent(app.getHttpServer());

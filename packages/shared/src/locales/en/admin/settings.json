@@ -1,5 +1,58 @@
 {
   "title": "Settings",
+  "tabs": {
+    "app": "General",
+    "auth": "Auth",
+    "custom_tags": "Custom Tags"
+  },
+  "auth": {
+    "googleAuthOnly": {
+      "title": "Google Authentication Mode",
+      "label": "Is google auth only",
+      "description": "If enabled, standard registration and email/password login will be disabled on the frontend. Users will only be able to authenticate using Google Login.",
+      "activeNotice": "Google Auth Only is active. Standard registration, password login, and password policy settings are hidden and disabled on the frontend."
+    },
+    "standard": {
+      "title": "Standard Authentication & Registration",
+      "desc": "Configure conventional registration and login methods for visitors.",
+      "is_registration_enabled": {
+        "label": "User Registration",
+        "description": "Allow visitors to register for a new account."
+      },
+      "is_email_verification_required": {
+        "label": "Email Verification Required",
+        "description": "Require users to verify their email address before accessing protected features."
+      },
+      "is_google_auth_enabled": {
+        "label": "Enable Google Login",
+        "description": "Show Google OAuth button alongside the standard login form."
+      },
+      "is_2fa_enabled": {
+        "label": "Two-Factor Authentication (2FA)",
+        "description": "Allow users to enable TOTP 2FA authenticator app on their profile."
+      }
+    },
+    "security": {
+      "title": "Password & Security Policies",
+      "desc": "Set password complexity and brute-force protection thresholds.",
+      "password_min_length": {
+        "label": "Minimum Password Length",
+        "description": "Minimum number of characters required for user passwords."
+      },
+      "session_lifetime_days": {
+        "label": "Session Lifetime (Days)",
+        "description": "Number of days a user session cookie remains valid."
+      },
+      "max_login_attempts": {
+        "label": "Max Login Attempts",
+        "description": "Number of failed password attempts before locking the account."
+      },
+      "lockout_duration_minutes": {
+        "label": "Lockout Duration (Minutes)",
+        "description": "Duration in minutes an account remains locked after exceeding failed attempts."
+      }
+    }
+  },
   "sections": { "general": "General", "auth": "Authentication", "email": "Email", "storage": "Storage" },
-  "actions": { "save": "Save settings", "saved": "Settings saved." }
+  "actions": { "save": "Save Changes", "saving": "Saving...", "saved": "Settings saved." }
 }

@@ -38,26 +38,40 @@ api.interceptors.response.use(
     const original = err.config as typeof err.config & { _retry?: boolean };
     // Skip auto-refresh for auth endpoints — let the error propagate to the caller
     const skipRefreshUrls = ['/auth/login', '/auth/register', '/auth/refresh'];
-    const isAuthEndpoint = skipRefreshUrls.some((u) => original.url?.includes(u));
-    if (err.response?.status !== 401 || original._retry || isAuthEndpoint) return Promise.reject(err);
+    const isAuthEndpoint = skipRefreshUrls.some((u) => original?.url?.includes(u));
+    if (err.response?.status !== 401 || original?._retry || isAuthEndpoint) return Promise.reject(err);
 
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
-        waitQueue.push(() => resolve(api(original)));
+        waitQueue.push(() => {
+          if (original) original._retry = true;
+          resolve(api(original));
+        });
       });
     }
 
-    original._retry = true;
+    if (original) original._retry = true;
     isRefreshing = true;
 
     try {
       await api.post('/auth/refresh');
-      waitQueue.forEach((cb) => cb());
+      const callers = [...waitQueue];
       waitQueue = [];
+      callers.forEach((cb) => cb());
       return api(original);
-    } catch {
+    } catch (refreshErr) {
       waitQueue = [];
-      if (typeof window !== 'undefined') window.location.href = '/login';
+      const refreshStatus = (refreshErr as { response?: { status?: number } })?.response?.status;
+      if (typeof window !== 'undefined' && (refreshStatus === 401 || refreshStatus === 403)) {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } catch {
+          // ignore
+        }
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+        }
+      }
       return Promise.reject(err);
     } finally {
       isRefreshing = false;

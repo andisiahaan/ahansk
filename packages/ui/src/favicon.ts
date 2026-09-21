@@ -1,6 +1,6 @@
 /**
- * Returns Next.js Metadata icons config pointing to the frontend's favicon.
- * SSOT: favicon lives only in apps/frontend/public/favicon.png
+ * Returns Next.js Metadata icons config pointing to the web app's favicon.
+ * SSOT: favicon lives only in apps/web/public/favicon.png
  *
  * Usage in layout.tsx:
  *   import { getBrandIcons } from '@ahansk/ui';

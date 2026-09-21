@@ -107,6 +107,17 @@ export const UpdateUserSchema = z.object({
 });
 export type UpdateUserDto = z.infer<typeof UpdateUserSchema>;
 
+export const UserQuerySchema = z.object({
+  page: z.coerce.number().min(1).optional().default(1),
+  limit: z.coerce.number().min(1).max(100).optional().default(20),
+  search: z.string().optional(),
+  role: z.enum(['ADMIN', 'USER']).optional(),
+  isActiveStr: z.enum(['true', 'false']).optional(),
+  sortBy: z.enum(['created_at', 'name', 'email', 'role', 'is_active']).optional().default('created_at'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
+});
+export type UserQueryDto = z.infer<typeof UserQuerySchema>;
+
 // ─── Settings ─────────────────────────────────────────────────────────────────
 export const AppSettingsSchema = z.object({
   name: z.string().min(1).max(100),
@@ -115,6 +126,14 @@ export const AppSettingsSchema = z.object({
   meta_keywords: z.string().max(255).optional(),
 });
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
+
+export const CustomTagsSettingsSchema = z.object({
+  headTop: z.string().optional().default(''),
+  headBottom: z.string().optional().default(''),
+  bodyTop: z.string().optional().default(''),
+  bodyBottom: z.string().optional().default(''),
+});
+export type CustomTagsSettings = z.infer<typeof CustomTagsSettingsSchema>;
 
 export const UpdateSettingSchema = z.object({
   settings: z.record(z.string(), z.unknown()),

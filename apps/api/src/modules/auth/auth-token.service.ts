@@ -7,13 +7,12 @@ import { AuthRepository } from './auth.repository';
 import { NotificationService } from '../notifications/notification.service';
 import { BanService } from '../users/ban.service';
 import { messages } from '@ahansk/shared';
-
-const COOKIE_DEFAULTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  path: '/',
-};
+import type { AuthUser } from '@ahansk/shared';
+import {
+  setAuthCookies,
+  setAccessTokenCookie,
+  clearAuthCookies,
+} from './auth-cookie.helper';
 
 @Injectable()
 export class AuthTokenService {
@@ -35,26 +34,18 @@ export class AuthTokenService {
     );
   }
 
-  setAuthCookies(res: Response, accessToken: string, refreshToken: string, refreshExpiresAt: Date): void {
-    res.cookie('access_token', accessToken, { ...COOKIE_DEFAULTS, maxAge: 15 * 60 * 1000 });
-    res.cookie('refresh_token', refreshToken, {
-      ...COOKIE_DEFAULTS,
-      maxAge: refreshExpiresAt.getTime() - Date.now(),
-      path: '/auth/refresh',
-    });
-  }
-
-  clearAuthCookies(res: Response): void {
-    res.clearCookie('access_token', { ...COOKIE_DEFAULTS });
-    res.clearCookie('refresh_token', { ...COOKIE_DEFAULTS, path: '/auth/refresh' });
-  }
-
-  async issueTokens(userId: number | bigint, res: Response, ip?: string, ua?: string): Promise<{ message: string }> {
+  async issueTokens(
+    userId: number | bigint,
+    res: Response,
+    ip?: string,
+    ua?: string,
+  ): Promise<{ message: string }> {
     const accessToken = this.signAccessToken(userId);
     const raw = crypto.randomBytes(40).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(raw).digest('hex');
     const days = this.config.get<number>('app.jwt.refreshExpiresDays', 7);
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    const accessExpires = this.config.get<string>('app.jwt.accessExpires', '15m');
 
     await this.repo.createRefreshToken({
       user_id: userId,
@@ -64,7 +55,7 @@ export class AuthTokenService {
       user_agent: ua,
     });
 
-    this.setAuthCookies(res, accessToken, raw, expiresAt);
+    setAuthCookies(res.req, res, accessToken, raw, expiresAt, accessExpires);
 
     void this.notifications.send({
       type: 'account.login_alert',
@@ -78,21 +69,77 @@ export class AuthTokenService {
   }
 
   async refresh(rawToken: string, res: Response, ip?: string, ua?: string): Promise<{ message: string }> {
-    if (!rawToken) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+    await this.processTokenRefresh(rawToken, res.req, res, false);
+    return { message: 'Token refreshed' };
+  }
+
+  async refreshSilently(rawToken: string, req: any, res: Response): Promise<AuthUser | null> {
+    try {
+      return await this.processTokenRefresh(rawToken, req, res, true);
+    } catch {
+      return null;
+    }
+  }
+
+  private async processTokenRefresh(
+    rawToken: string,
+    req: any,
+    res: Response,
+    isSilent = false,
+  ): Promise<AuthUser | null> {
+    if (!rawToken) {
+      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      return null;
+    }
 
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const record = await this.repo.findRefreshToken(tokenHash);
 
-    if (!record || record.revoked_at || record.expires_at < new Date()) {
-      if (record?.replaced_by) await this.repo.revokeAllUserRefreshTokens(record.user_id);
-      this.clearAuthCookies(res);
-      throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+    if (!record || record.expires_at < new Date()) {
+      clearAuthCookies(req, res);
+      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      return null;
     }
 
-    const isBanned = await this.banService.isUserBanned(Number(record.user_id));
+    const userId = Number(record.user_id);
+    const isBanned = await this.banService.isUserBanned(userId);
     if (isBanned) {
-      this.clearAuthCookies(res);
-      throw new UnauthorizedException('Your account has been banned. Please contact support.');
+      clearAuthCookies(req, res);
+      if (!isSilent) throw new UnauthorizedException('Your account has been banned. Please contact support.');
+      return null;
+    }
+
+    const user = await this.repo.findUserById(userId);
+    if (!user || !user.is_active) {
+      clearAuthCookies(req, res);
+      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      return null;
+    }
+
+    const accessExpires = this.config.get<string>('app.jwt.accessExpires', '15m');
+    const authUser: AuthUser = {
+      id: Number(user.id),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      twoFactorEnabled: user.totp_enabled,
+      avatar: user.avatar,
+    };
+
+    // Grace period for token rotation race conditions (within 60s)
+    if (record.revoked_at) {
+      if (record.replaced_by) {
+        const revokedAgo = Date.now() - record.revoked_at.getTime();
+        if (revokedAgo < 60_000) {
+          const accessToken = this.signAccessToken(userId);
+          setAccessTokenCookie(req, res, accessToken, accessExpires);
+          return authUser;
+        }
+        await this.repo.revokeAllUserRefreshTokens(record.user_id);
+      }
+      clearAuthCookies(req, res);
+      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      return null;
     }
 
     const newRaw = crypto.randomBytes(40).toString('hex');
@@ -101,9 +148,9 @@ export class AuthTokenService {
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     await this.repo.rotateRefreshToken(tokenHash, newHash, expiresAt);
 
-    const accessToken = this.signAccessToken(record.user_id);
-    this.setAuthCookies(res, accessToken, newRaw, expiresAt);
-    return { message: 'Token refreshed' };
+    const accessToken = this.signAccessToken(userId);
+    setAuthCookies(req, res, accessToken, newRaw, expiresAt, accessExpires);
+    return authUser;
   }
 
   async logout(res: Response): Promise<void> {
@@ -112,6 +159,6 @@ export class AuthTokenService {
       const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
       await this.repo.revokeRefreshToken(tokenHash);
     }
-    this.clearAuthCookies(res);
+    clearAuthCookies(res.req, res);
   }
 }

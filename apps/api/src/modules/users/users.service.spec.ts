@@ -59,26 +59,26 @@ describe('UsersService', () => {
   describe('findById', () => {
     it('should throw NotFoundException if user is not found', async () => {
       mockUsersRepo.findById.mockResolvedValue(null);
-      await expect(service.findById('123')).rejects.toThrow(NotFoundException);
+      await expect(service.findById(123)).rejects.toThrow(NotFoundException);
     });
 
     it('should return user if found', async () => {
-      const user = { id: '123', email: 'test@example.com' };
+      const user = { id: 123, email: 'test@example.com' };
       mockUsersRepo.findById.mockResolvedValue(user);
-      const result = await service.findById('123');
+      const result = await service.findById(123);
       expect(result).toEqual(user);
     });
   });
 
   describe('create', () => {
     it('should throw ConflictException if email exists', async () => {
-      mockUsersRepo.findByEmail.mockResolvedValue({ id: '123' });
+      mockUsersRepo.findByEmail.mockResolvedValue({ id: 123 });
       await expect(service.create({ email: 'test@example.com', name: 'Test', password: 'pw', role: 'USER' })).rejects.toThrow(ConflictException);
     });
 
     it('should hash password and create admin', async () => {
       mockUsersRepo.findByEmail.mockResolvedValue(null);
-      mockUsersRepo.createUser.mockResolvedValue({ id: '123', email: 'admin@example.com', role: 'ADMIN' });
+      mockUsersRepo.createUser.mockResolvedValue({ id: 123, email: 'admin@example.com', role: 'ADMIN' });
       const result = await service.create({ email: 'admin@example.com', name: 'Admin', password: 'password123', role: 'ADMIN' });
       expect(result).toHaveProperty('id');
       expect(result.role).toBe('ADMIN');
@@ -86,7 +86,7 @@ describe('UsersService', () => {
 
     it('should create user', async () => {
       mockUsersRepo.findByEmail.mockResolvedValue(null);
-      mockUsersRepo.createUser.mockResolvedValue({ id: '124', email: 'user@example.com', role: 'USER' });
+      mockUsersRepo.createUser.mockResolvedValue({ id: 124, email: 'user@example.com', role: 'USER' });
       const result = await service.create({ email: 'user@example.com', name: 'User', password: 'password123', role: 'USER' });
       expect(result.role).toBe('USER');
     });
@@ -94,8 +94,8 @@ describe('UsersService', () => {
 
   describe('changePassword', () => {
     it('should throw BadRequestException if user has no password', async () => {
-      mockAuthRepo.findUserById.mockResolvedValue({ id: '123', password: null });
-      await expect(service.changePassword('123', { currentPassword: 'old', newPassword: 'new' })).rejects.toThrow(BadRequestException);
+      mockAuthRepo.findUserById.mockResolvedValue({ id: 123, password: null });
+      await expect(service.changePassword(123, { currentPassword: 'old', newPassword: 'new' })).rejects.toThrow(BadRequestException);
     });
   });
 });

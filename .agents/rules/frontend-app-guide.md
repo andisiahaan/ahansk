@@ -8,7 +8,7 @@ description: Standar khusus frontend user-facing (Next.js App Router) — stylin
 
 # Frontend App Guide — Next.js (User-Facing)
 
-App: `apps/frontend` — domain `domain.com`
+App: `apps/web` — domain `domain.com`
 
 ## Styling & Komponen
 
@@ -41,7 +41,7 @@ App: `apps/frontend` — domain `domain.com`
 
 - **Semua string UI wajib `next-intl`** — dilarang hardcode string dalam JSX/TSX.
 - Client Components: `useTranslations('namespace')`. Server Components: `getTranslations('namespace')`.
-- **Tidak ada folder `messages/` atau `locales/` di dalam `apps/frontend`** — semua locale ada di `packages/shared`.
+- **Tidak ada folder `messages/` atau `locales/` di dalam `apps/web`** — semua locale ada di `packages/shared`.
 
 Arsitektur locale (SSOT di shared):
 ```
@@ -98,4 +98,4 @@ const { modules, frontend } = localeRegistry[locale];
 - Membuat komponen yang sudah ada di `components/ui/`.
 - Fetch langsung di komponen UI.
 - **Hardcode string UI** tanpa terjemahan.
-- Folder `messages/` atau `locales/` di dalam `apps/frontend`.
+- Folder `messages/` atau `locales/` di dalam `apps/web`.

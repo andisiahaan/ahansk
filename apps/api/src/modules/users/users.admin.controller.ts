@@ -7,7 +7,7 @@ import { BanService } from './ban.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '@ahansk/shared';
-import { CreateUserDto, UpdateUserDto, BanUserDto } from './users.dto';
+import { CreateUserDto, UpdateUserDto, BanUserDto, UserQueryDto } from './users.dto';
 
 @Roles('ADMIN')
 @Controller('admin/users')
@@ -18,8 +18,8 @@ export class UsersAdminController {
   ) {}
 
   @Get()
-  async findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.usersService.findAll(Number(page) || 1, Number(limit) || 20);
+  async findAll(@Query() query: UserQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

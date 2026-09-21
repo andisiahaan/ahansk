@@ -8,11 +8,28 @@ type UserSelect = Omit<User, 'password' | 'totp_secret'>;
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(page: number, limit: number): Promise<{ data: UserSelect[]; total: number }> {
+  async findAll(query: import('./users.dto').UserQueryDto): Promise<{ data: UserSelect[]; total: number }> {
+    const { page, limit, search, role, isActiveStr, sortBy, order } = query;
     const skip = (page - 1) * limit;
+
+    const where: Prisma.UserWhereInput = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { email: { contains: search } },
+        { username: { contains: search } },
+      ];
+    }
+    if (role) where.role = role;
+    if (isActiveStr !== undefined) {
+      where.is_active = isActiveStr === 'true';
+    }
+
+    const orderBy: Prisma.UserOrderByWithRelationInput = { [sortBy]: order };
+
     const [data, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({ skip, take: limit, omit: { password: true, totp_secret: true }, orderBy: { created_at: 'desc' } }),
-      this.prisma.user.count(),
+      this.prisma.user.findMany({ skip, take: limit, where, omit: { password: true, totp_secret: true }, orderBy }),
+      this.prisma.user.count({ where }),
     ]);
     return { data, total };
   }
