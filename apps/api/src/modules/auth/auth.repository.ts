@@ -20,6 +20,7 @@ export class AuthRepository {
     email: string;
     password?: string;
     name: string;
+    avatar?: string | null;
     email_verified_at?: Date;
   }): Promise<User> {
     return this.prisma.user.create({ data });

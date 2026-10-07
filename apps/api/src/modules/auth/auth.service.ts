@@ -149,16 +149,34 @@ export class AuthService {
     const payload = ticket.getPayload();
     if (!payload?.sub || !payload.email) throw new UnauthorizedException(messages.auth.googleTokenInvalid);
 
-    let user = (await this.repo.findOAuthAccount('google', payload.sub)) ? await this.repo.findUserByEmail(payload.email) : null;
+    const authSettings = await this.settingsCache.get(SETTING_KEYS.AUTH);
+    if (!authSettings.is_google_auth_enabled) {
+      throw new BadRequestException(messages.auth.googleAuthDisabled);
+    }
+
+    const oauthAccount = await this.repo.findOAuthAccount('google', payload.sub);
+    let user = oauthAccount ? await this.repo.findUserById(oauthAccount.user_id) : null;
 
     if (!user) {
       user = await this.repo.findUserByEmail(payload.email);
       if (user) {
         await this.repo.createOAuthAccount(user.id, 'google', payload.sub);
       } else {
-        user = await this.repo.createUser({ email: payload.email, name: payload.name ?? payload.email, email_verified_at: new Date() });
+        if (!authSettings.is_registration_enabled && !authSettings.is_google_auth_only) {
+          throw new BadRequestException(messages.auth.registrationDisabled);
+        }
+        user = await this.repo.createUser({
+          email: payload.email,
+          name: payload.name ?? payload.email,
+          avatar: payload.picture ?? null,
+          email_verified_at: new Date(),
+        });
         await this.repo.createOAuthAccount(user.id, 'google', payload.sub);
       }
+    }
+
+    if (!user.avatar && payload.picture) {
+      await this.repo.updateUser(user.id, { avatar: payload.picture });
     }
 
     const isBanned = await this.banService.isUserBanned(user.id);
@@ -168,6 +186,14 @@ export class AuthService {
 
     if (!user.email_verified_at) {
       await this.repo.updateUser(user.id, { email_verified_at: new Date() });
+    }
+
+    if (user.totp_enabled) {
+      const partialToken = this.jwt.sign(
+        { sub: Number(user.id), type: 'partial' },
+        { expiresIn: '10m', secret: this.config.get('app.jwt.accessSecret') },
+      );
+      return { requiresTwoFactor: true, partialToken };
     }
 
     await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: user.email, success: true, ip_address: ip, user_agent: ua });

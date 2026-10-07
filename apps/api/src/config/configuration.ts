@@ -37,8 +37,8 @@ export default registerAs('app', () => {
         endpoint: env.S3_ENDPOINT,
         bucket: env.S3_BUCKET,
         region: env.S3_REGION,
-        key: env.S3_KEY,
-        secret: env.S3_SECRET,
+        key: env.S3_KEY || env.S3_ACCESS_KEY_ID,
+        secret: env.S3_SECRET || env.S3_SECRET_ACCESS_KEY,
       },
     },
   };

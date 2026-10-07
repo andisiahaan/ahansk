@@ -31,6 +31,7 @@ const themeScript = `
 `;
 
 import { QueryProvider } from '@/providers/query-provider';
+import { GoogleAuthProvider } from '@/providers/google-auth-provider';
 
 import { cookies } from 'next/headers';
 
@@ -50,14 +51,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="antialiased">
         <IntlProvider locale={locale} messages={messages}>
           <QueryProvider>
-            <RecaptchaProvider>
-              <ThemeProvider>
-                <AuthProvider isLoggedIn={isLoggedIn}>
-                  {children}
-                  <Toaster />
-                </AuthProvider>
-              </ThemeProvider>
-            </RecaptchaProvider>
+            <GoogleAuthProvider>
+              <RecaptchaProvider>
+                <ThemeProvider>
+                  <AuthProvider isLoggedIn={isLoggedIn}>
+                    {children}
+                    <Toaster />
+                  </AuthProvider>
+                </ThemeProvider>
+              </RecaptchaProvider>
+            </GoogleAuthProvider>
           </QueryProvider>
         </IntlProvider>
       </body>

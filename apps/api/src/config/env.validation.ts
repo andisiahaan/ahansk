@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const emptyToUndefined = (val: unknown) => (typeof val === 'string' && val.trim() === '' ? undefined : val);
+const optionalUrl = () => z.preprocess(emptyToUndefined, z.string().url().optional());
+const optionalString = () => z.preprocess(emptyToUndefined, z.string().optional());
+const optionalEmail = () => z.preprocess(emptyToUndefined, z.string().email().optional());
+
 export const envSchema = z.object({
   // ─── App ──────────────────────────────────────────────────────────────────
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -36,18 +41,20 @@ export const envSchema = z.object({
   SMTP_FROM_ADDRESS: z.string().email(),
 
   // ─── Web Push (VAPID) ────────────────────────────────────────────────────────
-  VAPID_PUBLIC_KEY:    z.string().min(1).optional(),
-  VAPID_PRIVATE_KEY:   z.string().min(1).optional(),
-  VAPID_CONTACT_EMAIL: z.string().email().optional(),
+  VAPID_PUBLIC_KEY:    optionalString(),
+  VAPID_PRIVATE_KEY:   optionalString(),
+  VAPID_CONTACT_EMAIL: optionalEmail(),
 
   // ─── Storage ──────────────────────────────────────────────────────────────
   DISK: z.enum(['local', 's3']).default('local'),
   STORAGE_LOCAL_PATH: z.string().default('./uploads'),
-  S3_ENDPOINT: z.string().url().optional(),
-  S3_BUCKET: z.string().optional(),
-  S3_REGION: z.string().optional(),
-  S3_KEY: z.string().optional(),
-  S3_SECRET: z.string().optional(),
+  S3_ENDPOINT: optionalUrl(),
+  S3_BUCKET: optionalString(),
+  S3_REGION: optionalString(),
+  S3_KEY: optionalString(),
+  S3_SECRET: optionalString(),
+  S3_ACCESS_KEY_ID: optionalString(),
+  S3_SECRET_ACCESS_KEY: optionalString(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -61,8 +68,10 @@ export function validate(config: Record<string, unknown>): Env {
 
   const env = result.data;
   if (env.DISK === 's3') {
-    if (!env.S3_ENDPOINT || !env.S3_BUCKET || !env.S3_REGION || !env.S3_KEY || !env.S3_SECRET) {
-      throw new Error('S3 configuration is incomplete. S3_ENDPOINT, S3_BUCKET, S3_REGION, S3_KEY, S3_SECRET are required when DISK=s3');
+    const key = env.S3_KEY || env.S3_ACCESS_KEY_ID;
+    const secret = env.S3_SECRET || env.S3_SECRET_ACCESS_KEY;
+    if (!env.S3_ENDPOINT || !env.S3_BUCKET || !env.S3_REGION || !key || !secret) {
+      throw new Error('S3 configuration is incomplete. S3_ENDPOINT, S3_BUCKET, S3_REGION, and access key/secret are required when DISK=s3');
     }
   }
 
