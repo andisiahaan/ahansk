@@ -1,25 +1,56 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
+import * as syncFs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import type { StorageDriver, UploadedFile } from '../storage.service';
 import type { UploadContext } from '../../../config/filesystem';
 import { UPLOAD_CONFIGS } from '../../../config/filesystem';
 
+function resolveStorageBasePath(configuredPath = 'storage'): string {
+  if (path.isAbsolute(configuredPath)) {
+    return configuredPath;
+  }
+  // Traverse upward to locate the monorepo root (marked by pnpm-workspace.yaml)
+  let cur = __dirname;
+  while (cur !== path.dirname(cur)) {
+    if (syncFs.existsSync(path.join(cur, 'pnpm-workspace.yaml'))) {
+      return path.resolve(cur, configuredPath);
+    }
+    cur = path.dirname(cur);
+  }
+  cur = process.cwd();
+  while (cur !== path.dirname(cur)) {
+    if (syncFs.existsSync(path.join(cur, 'pnpm-workspace.yaml'))) {
+      return path.resolve(cur, configuredPath);
+    }
+    cur = path.dirname(cur);
+  }
+  return path.resolve(process.cwd(), configuredPath);
+}
+
 @Injectable()
 export class LocalDriver implements StorageDriver {
-  constructor(private readonly config: ConfigService) {}
+  private readonly _basePath: string;
 
-  private get basePath(): string {
-    return this.config.get<string>('app.storage.localPath', './uploads');
+  constructor(private readonly config: ConfigService) {
+    const configured =
+      this.config.get<string>('app.storage.local.path') ||
+      this.config.get<string>('app.storage.localPath') ||
+      'storage';
+    this._basePath = resolveStorageBasePath(configured);
+  }
+
+  get basePath(): string {
+    return this._basePath;
   }
 
   async upload(file: UploadedFile, context: UploadContext): Promise<string> {
     const { prefix } = UPLOAD_CONFIGS[context];
     const ext        = path.extname(file.originalname).toLowerCase();
     const filename   = `${crypto.randomBytes(16).toString('hex')}${ext}`;
-    const dir        = path.join(this.basePath, prefix);
+    const dir        = path.join(this._basePath, prefix);
 
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(path.join(dir, filename), file.buffer);
@@ -28,6 +59,6 @@ export class LocalDriver implements StorageDriver {
   }
 
   async delete(filePath: string): Promise<void> {
-    await fs.rm(path.join(this.basePath, filePath), { force: true });
+    await fs.rm(path.join(this._basePath, filePath), { force: true });
   }
 }

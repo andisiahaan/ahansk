@@ -115,11 +115,17 @@ Gunakan `PaginatedResponse<T>` dan `buildPaginationMeta()`.
 - E2E: happy path auth flow dan endpoint CRUD utama.
 - Test file di sebelah file yang ditest: `auth.service.spec.ts`.
 
-## File Upload
+## File Upload & Storage System
 
-- Gunakan `StorageService`. Konfigurasi upload (MIME type, ukuran, prefix folder) wajib di `src/config/filesystem.ts` sebagai SSOT (`DISK_CONFIGS`) — bukan inline di module/controller.
-- **Simpan path relatif ke DB**, bukan full URL.
-- Driver storage ditentukan env var `DISK=local|s3`. Validasi di `env.validation.ts`.
+- Gunakan `StorageService`. Konfigurasi upload (MIME type, ukuran, prefix folder) wajib di `src/config/filesystem.ts` (`UPLOAD_CONFIGS`) sebagai SSOT — bukan inline di module/controller.
+- **Dua pilihan driver (`DISK=local|s3`)**:
+  - `local`: Mengunggah ke folder root monorepo di `/storage` (`<root>/storage`), bukan di dalam `apps/api/uploads`. File disajikan langsung secara statis oleh web server (misal: Laragon `http://ahansk.test/storage` atau subdomain `storage.domain.com`).
+  - `s3`: S3-compatible (AWS, MinIO, Cloudflare R2) via `S3_*` env vars.
+- **PUBLIC URL**:
+  - Baik `local` maupun `s3` memiliki public URL di `.env` (`STORAGE_PUBLIC_URL` untuk local, `S3_PUBLIC_URL` untuk s3).
+  - Gunakan `storageService.getUrl(relativePath, diskOverride?)` untuk mendapatkan full URL.
+- **Simpan path relatif ke DB** (misal: `avatars/abc12345.webp`), bukan full URL.
+- **Isolasi Controller**: Controller tidak pernah menentukan path fisik (tidak ada `../../storage`). Penentuan disk terpusat di `StorageService`, dengan dukungan opsional parameter override disk: `storageService.upload(file, context, { disk?: 'local' | 's3' })`.
 
 ## Fitur Opsional (tambah hanya jika project membutuhkan)
 

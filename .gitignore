@@ -55,4 +55,7 @@ next-env.d.ts
 
 # Uploads / Public assets
 apps/backend/uploads/
+uploads/
+/storage/*
+!/storage/.gitkeep
 self-guide.md

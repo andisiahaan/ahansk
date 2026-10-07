@@ -47,7 +47,8 @@ export const envSchema = z.object({
 
   // ─── Storage ──────────────────────────────────────────────────────────────
   DISK: z.enum(['local', 's3']).default('local'),
-  STORAGE_LOCAL_PATH: z.string().default('./uploads'),
+  STORAGE_LOCAL_PATH: z.string().default('storage'),
+  STORAGE_PUBLIC_URL: optionalUrl(),
   S3_ENDPOINT: optionalUrl(),
   S3_BUCKET: optionalString(),
   S3_REGION: optionalString(),
@@ -55,6 +56,7 @@ export const envSchema = z.object({
   S3_SECRET: optionalString(),
   S3_ACCESS_KEY_ID: optionalString(),
   S3_SECRET_ACCESS_KEY: optionalString(),
+  S3_PUBLIC_URL: optionalUrl(),
 });
 
 export type Env = z.infer<typeof envSchema>;

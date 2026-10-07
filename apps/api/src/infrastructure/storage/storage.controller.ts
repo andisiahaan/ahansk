@@ -4,18 +4,16 @@ import { Public } from '../../common/decorators/public.decorator';
 import type { Response } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
+import { LocalDriver } from './drivers/local.driver';
 import { S3Driver } from './drivers/s3.driver';
 
 @Controller('storage')
 export class StorageController {
   constructor(
     private readonly config: ConfigService,
+    private readonly localDriver: LocalDriver,
     private readonly s3Driver: S3Driver,
   ) {}
-
-  private get basePath(): string {
-    return this.config.get<string>('app.storage.localPath', './uploads');
-  }
 
   @Get(':context/:filename')
   @Public()
@@ -41,7 +39,7 @@ export class StorageController {
       }
     }
 
-    const filePath = path.join(process.cwd(), this.basePath, safeContext, safeFilename);
+    const filePath = path.join(this.localDriver.basePath, safeContext, safeFilename);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('File not found');
     }

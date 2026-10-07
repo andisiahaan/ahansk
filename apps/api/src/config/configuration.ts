@@ -33,12 +33,17 @@ export default registerAs('app', () => {
     storage: {
       disk: env.DISK,
       localPath: env.STORAGE_LOCAL_PATH,
+      local: {
+        path: env.STORAGE_LOCAL_PATH,
+        publicUrl: env.STORAGE_PUBLIC_URL || 'http://ahansk.test/storage',
+      },
       s3: {
         endpoint: env.S3_ENDPOINT,
         bucket: env.S3_BUCKET,
         region: env.S3_REGION,
         key: env.S3_KEY || env.S3_ACCESS_KEY_ID,
         secret: env.S3_SECRET || env.S3_SECRET_ACCESS_KEY,
+        publicUrl: env.S3_PUBLIC_URL,
       },
     },
   };
