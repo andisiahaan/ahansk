@@ -9,7 +9,7 @@ import { SettingsCache } from '../../infrastructure/settings/settings-cache.serv
 import { NotificationService } from '../notifications/notification.service';
 import { OtpService } from '../otp/otp.service';
 import { BanService } from '../users/ban.service';
-import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 
 import { AuthTokenService } from './auth-token.service';
 import { AuthEmailChangeService } from './auth-email-change.service';
@@ -42,15 +42,25 @@ describe('AuthService', () => {
   };
 
   const mockJwt = { sign: jest.fn(() => 'mock-jwt-token') };
-  const mockConfig = { get: jest.fn((key) => key) };
-  const mockEmail = { sendEmailVerification: jest.fn(), sendPasswordReset: jest.fn() };
+  const mockConfig = { get: jest.fn((key: string): string => key) };
+  const mockEmail = {
+    sendEmailVerification: jest.fn(),
+    sendPasswordReset: jest.fn(),
+  };
   const mockRecaptcha = { verify: jest.fn() };
   const mockSettingsCache = { get: jest.fn() };
   const mockNotifications = { sendToAdmins: jest.fn(), send: jest.fn() };
   const mockOtp = { sendOtp: jest.fn(), verifyOtp: jest.fn() };
   const mockBanService = { isUserBanned: jest.fn() };
-  const mockTokenService = { issueTokens: jest.fn(), refresh: jest.fn(), logout: jest.fn() };
-  const mockEmailChangeService = { requestEmailChange: jest.fn(), verifyEmailChange: jest.fn() };
+  const mockTokenService = {
+    issueTokens: jest.fn(),
+    refresh: jest.fn(),
+    logout: jest.fn(),
+  };
+  const mockEmailChangeService = {
+    requestEmailChange: jest.fn(),
+    verifyEmailChange: jest.fn(),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -82,19 +92,35 @@ describe('AuthService', () => {
   describe('register', () => {
     it('should throw BadRequestException if registration is disabled', async () => {
       mockRecaptcha.verify.mockResolvedValue(true);
-      mockSettingsCache.get.mockResolvedValue({ is_registration_enabled: false });
+      mockSettingsCache.get.mockResolvedValue({
+        is_registration_enabled: false,
+      });
 
-      await expect(service.register({ email: 't@t.com', password: 'pw', name: 'Test', recaptchaToken: 'x' }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.register({
+          email: 't@t.com',
+          password: 'pw',
+          name: 'Test',
+          recaptchaToken: 'x',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ConflictException if email exists', async () => {
       mockRecaptcha.verify.mockResolvedValue(true);
-      mockSettingsCache.get.mockResolvedValue({ is_registration_enabled: true });
+      mockSettingsCache.get.mockResolvedValue({
+        is_registration_enabled: true,
+      });
       mockRepo.findUserByEmail.mockResolvedValue({ id: '123' });
 
-      await expect(service.register({ email: 't@t.com', password: 'pw', name: 'Test', recaptchaToken: 'x' }))
-        .rejects.toThrow(ConflictException);
+      await expect(
+        service.register({
+          email: 't@t.com',
+          password: 'pw',
+          name: 'Test',
+          recaptchaToken: 'x',
+        }),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

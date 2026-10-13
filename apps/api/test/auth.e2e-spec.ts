@@ -12,14 +12,16 @@ describe('AuthController (e2e)', () => {
     const setup = await setupE2EApp();
     app = setup.app;
     prisma = setup.prisma;
-    
+
     // Cleanup DB before tests
     await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e_' } } });
   });
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e_' } } });
+      await prisma.user.deleteMany({
+        where: { email: { startsWith: 'e2e_' } },
+      });
     }
     await teardownE2EApp(app);
   });
@@ -28,7 +30,11 @@ describe('AuthController (e2e)', () => {
     it('should require CSRF token', async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'e2e_test@example.com', name: 'Test', password: 'password123' })
+        .send({
+          email: 'e2e_test@example.com',
+          name: 'Test',
+          password: 'password123',
+        })
         .expect(403)
         .expect((res) => {
           expect(res.body.message).toBe('Invalid CSRF Token');
@@ -39,7 +45,8 @@ describe('AuthController (e2e)', () => {
       // First get a CSRF token
       const res = await request(app.getHttpServer()).get('/');
       const cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-      const csrfCookie = cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
+      const csrfCookie =
+        cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
       expect(csrfCookie).toBeDefined();
       csrfToken = csrfCookie.split(';')[0].split('=')[1];
 
@@ -48,7 +55,11 @@ describe('AuthController (e2e)', () => {
         .post('/auth/register')
         .set('Cookie', [`csrf_token=${csrfToken}`])
         .set('x-csrf-token', csrfToken)
-        .send({ email: 'e2e_register@example.com', name: 'E2E Test', password: 'password123' })
+        .send({
+          email: 'e2e_register@example.com',
+          name: 'E2E Test',
+          password: 'password123',
+        })
         .expect(201)
         .expect((res) => {
           expect(res.body.success).toBe(true);
@@ -60,7 +71,11 @@ describe('AuthController (e2e)', () => {
         .post('/auth/register')
         .set('Cookie', [`csrf_token=${csrfToken}`])
         .set('x-csrf-token', csrfToken)
-        .send({ email: 'e2e_register@example.com', name: 'E2E Test', password: 'password123' })
+        .send({
+          email: 'e2e_register@example.com',
+          name: 'E2E Test',
+          password: 'password123',
+        })
         .expect(409);
     });
   });
@@ -70,7 +85,7 @@ describe('AuthController (e2e)', () => {
       // Manually verify email to allow login
       await prisma.user.update({
         where: { email: 'e2e_register@example.com' },
-        data: { email_verified_at: new Date() }
+        data: { email_verified_at: new Date() },
       });
 
       const res = await request(app.getHttpServer())
@@ -81,11 +96,15 @@ describe('AuthController (e2e)', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      
+
       const cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-      const hasAccessToken = cookies.some((c: string) => c.startsWith('access_token='));
-      const hasRefreshToken = cookies.some((c: string) => c.startsWith('refresh_token='));
-      
+      const hasAccessToken = cookies.some((c: string) =>
+        c.startsWith('access_token='),
+      );
+      const hasRefreshToken = cookies.some((c: string) =>
+        c.startsWith('refresh_token='),
+      );
+
       expect(hasAccessToken).toBe(true);
       expect(hasRefreshToken).toBe(true);
     });

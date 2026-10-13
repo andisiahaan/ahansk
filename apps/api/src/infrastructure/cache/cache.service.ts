@@ -12,7 +12,11 @@ export class CacheService {
   }
 
   async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
-    await this.cache.set(key, value, ttlSeconds ? ttlSeconds * 1000 : undefined);
+    await this.cache.set(
+      key,
+      value,
+      ttlSeconds ? ttlSeconds * 1000 : undefined,
+    );
   }
 
   async del(key: string): Promise<void> {

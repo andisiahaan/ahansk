@@ -8,15 +8,17 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ZodValidationPipe } from './common/pipes/zod-validation.pipe';
 import { AuthService } from './modules/auth/auth.service';
+import { getCookieDomain } from './modules/auth/auth-cookie.helper';
 import helmet from 'helmet';
 import * as crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 
 async function bootstrap(): Promise<void> {
   // ─── BigInt JSON Serialization ──────────────────────────────────────────────
-  (BigInt.prototype as unknown as { toJSON: () => number }).toJSON = function () {
-    return Number(this);
-  };
+  (BigInt.prototype as unknown as { toJSON: () => number }).toJSON =
+    function () {
+      return Number(this);
+    };
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
@@ -32,13 +34,19 @@ async function bootstrap(): Promise<void> {
 
   // ─── CSRF Token Middleware (Double Submit Cookie) ───────────────────────────
   app.use((req: Request, res: Response, next: NextFunction) => {
-    let csrfToken = req.cookies?.['csrf_token'];
+    let csrfToken = (req.cookies as Record<string, string> | undefined)?.[
+      'csrf_token'
+    ];
     if (!csrfToken) {
       csrfToken = crypto.randomBytes(32).toString('hex');
+      const domain = getCookieDomain(req);
+      const isLocalhost = !domain;
+      const sameSite = isLocalhost ? ('lax' as const) : ('none' as const);
       res.cookie('csrf_token', csrfToken, {
         httpOnly: false, // Must be readable by frontend JS
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: !isLocalhost,
+        sameSite,
+        domain,
         path: '/',
       });
     }
@@ -54,13 +62,20 @@ async function bootstrap(): Promise<void> {
 
       const tokenInHeader = req.headers['x-csrf-token'];
       if (typeof tokenInHeader !== 'string' || typeof csrfToken !== 'string') {
-        return res.status(403).json({ success: false, message: 'Invalid CSRF Token' });
+        return res
+          .status(403)
+          .json({ success: false, message: 'Invalid CSRF Token' });
       }
 
       const bufHeader = Buffer.from(tokenInHeader);
       const bufCookie = Buffer.from(csrfToken);
-      if (bufHeader.length !== bufCookie.length || !crypto.timingSafeEqual(bufHeader, bufCookie)) {
-        return res.status(403).json({ success: false, message: 'Invalid CSRF Token' });
+      if (
+        bufHeader.length !== bufCookie.length ||
+        !crypto.timingSafeEqual(bufHeader, bufCookie)
+      ) {
+        return res
+          .status(403)
+          .json({ success: false, message: 'Invalid CSRF Token' });
       }
     }
     next();
@@ -81,7 +96,10 @@ async function bootstrap(): Promise<void> {
   // ─── Global Guards ──────────────────────────────────────────────────────────
   const reflector = app.get(Reflector);
   const authService = app.get(AuthService);
-  app.useGlobalGuards(new JwtAuthGuard(reflector, authService), new RolesGuard(reflector));
+  app.useGlobalGuards(
+    new JwtAuthGuard(reflector, authService),
+    new RolesGuard(reflector),
+  );
 
   // ─── Global Filters ─────────────────────────────────────────────────────────
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -95,5 +113,4 @@ async function bootstrap(): Promise<void> {
   logger.log(`🚀 Backend running on http://0.0.0.0:${port}`, 'Bootstrap');
 }
 
-bootstrap();
-
+void bootstrap();

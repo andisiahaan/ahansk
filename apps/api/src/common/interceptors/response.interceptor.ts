@@ -21,11 +21,7 @@ export class ResponseInterceptor implements NestInterceptor {
   ): Observable<ApiResponse> {
     return next.handle().pipe(
       map((data: unknown) => {
-        if (
-          data !== null &&
-          typeof data === 'object' &&
-          'success' in (data as object)
-        ) {
+        if (data !== null && typeof data === 'object' && 'success' in data) {
           return data as ApiResponse;
         }
 

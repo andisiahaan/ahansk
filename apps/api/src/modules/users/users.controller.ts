@@ -1,7 +1,4 @@
-import {
-  Controller, Get, Patch,
-  Body, UploadedFile,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Body, UploadedFile } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { StorageUploadInterceptor } from '../../infrastructure/storage/upload.interceptor';
@@ -17,7 +14,7 @@ export class UsersController {
 
   @Get('me')
   async me(@CurrentUser() user: AuthUser) {
-    return this.usersService.findById(user.id);
+    return await this.usersService.findById(user.id);
   }
 
   @Patch('me')
@@ -28,7 +25,7 @@ export class UsersController {
     @UploadedFile() avatar?: Express.Multer.File & { buffer: Buffer },
   ) {
     const file = avatar ? (avatar as unknown as StorageFile) : undefined;
-    return this.usersService.updateProfile(user.id, dto, file);
+    return await this.usersService.updateProfile(user.id, dto, file);
   }
 
   @Patch('me/password')
@@ -36,7 +33,6 @@ export class UsersController {
     @CurrentUser() user: AuthUser,
     @Body() dto: ChangePasswordDto,
   ) {
-    return this.usersService.changePassword(user.id, dto);
+    return await this.usersService.changePassword(user.id, dto);
   }
 }
-

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useRecaptcha } from '@/lib/use-recaptcha';
 
 const TotpSchema = z.object({ code: z.string().min(6).max(11, 'Invalid code format') });
 type TotpValues = z.infer<typeof TotpSchema>;
@@ -73,6 +74,7 @@ function AdminLoginForm() {
   const params = useSearchParams();
   const nextUrl = params.get('from') ?? '/';
   const fetchMe = useAdminAuthStore((s) => s.fetchMe);
+  const { getRecaptchaToken } = useRecaptcha();
   const [twoFactor, setTwoFactor] = useState<{ partial: string } | null>(null);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginDto>({
@@ -81,8 +83,8 @@ function AdminLoginForm() {
 
   const onSubmit = async (data: LoginDto) => {
     try {
-      // Cookies are set by the server via Set-Cookie — no token in response body
-      const { data: res } = await api.post('/auth/login', { ...data, recaptchaToken: 'bypass-dev' });
+      const recaptchaToken = await getRecaptchaToken('admin_login');
+      const { data: res } = await api.post('/auth/login', { ...data, recaptchaToken });
       if (res.data?.requiresTwoFactor) {
         setTwoFactor({ partial: res.data.partialToken });
         return;

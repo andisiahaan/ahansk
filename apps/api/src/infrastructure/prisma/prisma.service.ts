@@ -4,7 +4,10 @@ import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 function parseDbUrl(): URL {
   const raw = process.env.DATABASE_URL;
-  if (!raw) throw new Error('[PrismaService] DATABASE_URL is not defined in environment');
+  if (!raw)
+    throw new Error(
+      '[PrismaService] DATABASE_URL is not defined in environment',
+    );
   return new URL(raw);
 }
 
@@ -20,9 +23,12 @@ function buildAdapter(url: URL): PrismaMariaDb {
 }
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
-    super({ adapter: buildAdapter(parseDbUrl()) } as ConstructorParameters<typeof PrismaClient>[0]);
+    super({ adapter: buildAdapter(parseDbUrl()) });
   }
 
   async onModuleInit(): Promise<void> {
@@ -33,4 +39,3 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     await this.$disconnect();
   }
 }
-

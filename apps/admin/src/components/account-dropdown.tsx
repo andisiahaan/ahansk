@@ -48,8 +48,12 @@ export function AccountDropdown({ className }: AccountDropdownProps) {
         aria-haspopup="true"
       >
         {/* Avatar */}
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
-          {initials}
+        <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0 overflow-hidden">
+          {user.avatar ? (
+            <img src={user.avatar} alt={user.name} className="size-full object-cover" />
+          ) : (
+            initials
+          )}
         </span>
         <span className="hidden lg:block text-left">
           <span className="block text-xs font-semibold text-foreground leading-tight">{user.name}</span>

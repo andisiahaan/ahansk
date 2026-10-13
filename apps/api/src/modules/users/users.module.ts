@@ -17,13 +17,20 @@ import { AuthRepository } from '../auth/auth.repository';
       storage: undefined, // use memory storage — StorageService handles persistence
       limits: { fileSize: UPLOAD_CONFIGS.avatar.maxSizeBytes },
       fileFilter: (_req, file, cb) => {
-        const allowed = UPLOAD_CONFIGS.avatar.allowedMimeTypes as readonly string[];
+        const allowed = UPLOAD_CONFIGS.avatar
+          .allowedMimeTypes as readonly string[];
         cb(null, allowed.includes(file.mimetype));
       },
     }),
   ],
   controllers: [UsersController, UsersAdminController],
-  providers: [UsersService, UsersRepository, AuthRepository, BanService, BanRepository],
+  providers: [
+    UsersService,
+    UsersRepository,
+    AuthRepository,
+    BanService,
+    BanRepository,
+  ],
   exports: [BanService, UsersRepository, UsersService],
 })
 export class UsersModule {}

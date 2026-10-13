@@ -23,14 +23,27 @@ export class OtpService {
     ttlMinutes?: number;
     cooldownSeconds?: number;
   }): Promise<{ sent: boolean; cooldownSeconds: number }> {
-    const remaining = await this.repo.cooldownSeconds(opts.userId, opts.purpose, opts.cooldownSeconds ?? 60);
+    const remaining = await this.repo.cooldownSeconds(
+      opts.userId,
+      opts.purpose,
+      opts.cooldownSeconds ?? 60,
+    );
     if (remaining > 0) return { sent: false, cooldownSeconds: remaining };
 
     const { code, expiresAt } = await this.repo.generate(
-      opts.userId, opts.purpose, opts.identifier, opts.ttlMinutes ?? 10,
+      opts.userId,
+      opts.purpose,
+      opts.identifier,
+      opts.ttlMinutes ?? 10,
     );
 
-    await this.email.sendOtpEmail(opts.toEmail, opts.toName, code, opts.purpose, expiresAt);
+    await this.email.sendOtpEmail(
+      opts.toEmail,
+      opts.toName,
+      code,
+      opts.purpose,
+      expiresAt,
+    );
     return { sent: true, cooldownSeconds: 0 };
   }
 
@@ -44,10 +57,19 @@ export class OtpService {
     code: string;
     identifier?: string;
   }): Promise<boolean> {
-    return this.repo.verify(opts.userId, opts.purpose, opts.code, opts.identifier);
+    return this.repo.verify(
+      opts.userId,
+      opts.purpose,
+      opts.code,
+      opts.identifier,
+    );
   }
 
-  async getCooldown(userId: number, purpose: OTP_PURPOSE, cooldownSec = 60): Promise<number> {
+  async getCooldown(
+    userId: number,
+    purpose: OTP_PURPOSE,
+    cooldownSec = 60,
+  ): Promise<number> {
     return this.repo.cooldownSeconds(userId, purpose, cooldownSec);
   }
 }

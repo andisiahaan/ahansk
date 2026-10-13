@@ -2,8 +2,8 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { CreateUserSchema, type CreateUserDto } from '@ahansk/shared';
+import { CreateUserSchema } from '@ahansk/shared';
+import type { z } from 'zod';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';

@@ -8,7 +8,9 @@ type UserSelect = Omit<User, 'password' | 'totp_secret'>;
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: import('./users.dto').UserQueryDto): Promise<{ data: UserSelect[]; total: number }> {
+  async findAll(
+    query: import('./users.dto').UserQueryDto,
+  ): Promise<{ data: UserSelect[]; total: number }> {
     const { page, limit, search, role, isActiveStr, sortBy, order } = query;
     const skip = (page - 1) * limit;
 
@@ -28,25 +30,42 @@ export class UsersRepository {
     const orderBy: Prisma.UserOrderByWithRelationInput = { [sortBy]: order };
 
     const [data, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({ skip, take: limit, where, omit: { password: true, totp_secret: true }, orderBy }),
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        where,
+        omit: { password: true, totp_secret: true },
+        orderBy,
+      }),
       this.prisma.user.count({ where }),
     ]);
     return { data, total };
   }
 
   async countAdmins(): Promise<number> {
-    return this.prisma.user.count({ where: { role: 'ADMIN', is_active: true } });
-  }
-
-  async findById(id: number | bigint): Promise<UserSelect | null> {
-    return this.prisma.user.findUnique({ 
-      where: { id: BigInt(id) }, 
-      omit: { password: true, totp_secret: true },
-      include: { bans: { orderBy: { created_at: 'desc' } } } 
+    return this.prisma.user.count({
+      where: { role: 'ADMIN', is_active: true },
     });
   }
 
-  async findActiveById(id: number | bigint): Promise<(UserSelect & { bans: { id: bigint; expires_at: Date | null; unbanned_at: Date | null }[] }) | null> {
+  async findById(id: number | bigint): Promise<UserSelect | null> {
+    return this.prisma.user.findUnique({
+      where: { id: BigInt(id) },
+      omit: { password: true, totp_secret: true },
+      include: { bans: { orderBy: { created_at: 'desc' } } },
+    });
+  }
+
+  async findActiveById(id: number | bigint): Promise<
+    | (UserSelect & {
+        bans: {
+          id: bigint;
+          expires_at: Date | null;
+          unbanned_at: Date | null;
+        }[];
+      })
+    | null
+  > {
     return this.prisma.user.findUnique({
       where: { id: BigInt(id), is_active: true },
       omit: { password: true, totp_secret: true },
@@ -54,10 +73,7 @@ export class UsersRepository {
         bans: {
           where: {
             unbanned_at: null,
-            OR: [
-              { expires_at: null },
-              { expires_at: { gt: new Date() } },
-            ],
+            OR: [{ expires_at: null }, { expires_at: { gt: new Date() } }],
           },
         },
       },
@@ -65,15 +81,52 @@ export class UsersRepository {
   }
 
   async findByEmail(email: string): Promise<UserSelect | null> {
-    return this.prisma.user.findUnique({ where: { email }, omit: { password: true, totp_secret: true } });
+    return this.prisma.user.findUnique({
+      where: { email },
+      omit: { password: true, totp_secret: true },
+    });
   }
 
-  async createUser(data: { email: string; password?: string; name: string; role?: 'ADMIN' | 'USER' }): Promise<UserSelect> {
-    return this.prisma.user.create({ data, omit: { password: true, totp_secret: true } });
+  async createUser(data: {
+    email: string;
+    password?: string;
+    name: string;
+    role?: 'ADMIN' | 'USER';
+  }): Promise<UserSelect> {
+    return this.prisma.user.create({
+      data,
+      omit: { password: true, totp_secret: true },
+    });
   }
 
-  async updateUser(id: number | bigint, data: Prisma.UserUpdateInput): Promise<UserSelect> {
-    return this.prisma.user.update({ where: { id: BigInt(id) }, data, omit: { password: true, totp_secret: true } });
+  async updateUser(
+    id: number | bigint,
+    data: Prisma.UserUpdateInput,
+  ): Promise<UserSelect> {
+    return this.prisma.user.update({
+      where: { id: BigInt(id) },
+      data,
+      omit: { password: true, totp_secret: true },
+    });
+  }
+
+  async checkRestrictedRelations(
+    userId: number | bigint,
+  ): Promise<string | null> {
+    const id = BigInt(userId);
+    const newsCount = await this.prisma.newsItem.count({
+      where: { author_id: id },
+    });
+    if (newsCount > 0) {
+      return `User cannot be deleted because they are the author of ${newsCount} news item(s). Reassign or delete the news items first.`;
+    }
+    const bansCount = await this.prisma.userBan.count({
+      where: { OR: [{ banned_by: id }, { unbanned_by: id }] },
+    });
+    if (bansCount > 0) {
+      return `User cannot be deleted because they are referenced in ${bansCount} user moderation audit record(s).`;
+    }
+    return null;
   }
 
   async deleteById(id: number | bigint): Promise<void> {
@@ -84,7 +137,13 @@ export class UsersRepository {
     return this.prisma.refreshToken.findMany({
       where: { user_id: BigInt(userId), revoked_at: null },
       orderBy: { created_at: 'desc' },
-      select: { id: true, user_agent: true, ip_address: true, created_at: true, expires_at: true },
+      select: {
+        id: true,
+        user_agent: true,
+        ip_address: true,
+        created_at: true,
+        expires_at: true,
+      },
     });
   }
 
@@ -107,7 +166,14 @@ export class UsersRepository {
       where: { user_id: BigInt(userId) },
       orderBy: { created_at: 'desc' },
       take: limit,
-      select: { id: true, type: true, ip_address: true, user_agent: true, created_at: true, success: true },
+      select: {
+        id: true,
+        type: true,
+        ip_address: true,
+        user_agent: true,
+        created_at: true,
+        success: true,
+      },
     });
   }
 }

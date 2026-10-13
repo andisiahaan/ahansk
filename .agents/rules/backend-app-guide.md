@@ -125,6 +125,7 @@ Gunakan `PaginatedResponse<T>` dan `buildPaginationMeta()`.
   - Baik `local` maupun `s3` memiliki public URL di `.env` (`STORAGE_PUBLIC_URL` untuk local, `S3_PUBLIC_URL` untuk s3).
   - Gunakan `storageService.getUrl(relativePath, diskOverride?)` untuk mendapatkan full URL.
 - **Simpan path relatif ke DB** (misal: `avatars/abc12345.webp`), bukan full URL.
+- **Transformasi URL Response**: Backend bertanggung jawab mentransformasikan path relatif DB menjadi Full Public URL (via `storageService.getUrl(path)`) sebelum data dikembalikan ke client (Frontend/Admin). Frontend & Admin tidak boleh merangkai/join URL file sendiri dan harus selalu menerima field file/avatar dalam bentuk Full URL yang siap pakai.
 - **Isolasi Controller**: Controller tidak pernah menentukan path fisik (tidak ada `../../storage`). Penentuan disk terpusat di `StorageService`, dengan dukungan opsional parameter override disk: `storageService.upload(file, context, { disk?: 'local' | 's3' })`.
 
 ## Fitur Opsional (tambah hanya jika project membutuhkan)

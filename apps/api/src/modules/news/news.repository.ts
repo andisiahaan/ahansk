@@ -9,20 +9,26 @@ export class NewsRepository {
 
   async list(q: ListNewsQueryDto, adminMode = false) {
     const skip = (q.page - 1) * q.limit;
-    const now  = new Date();
+    const now = new Date();
     const where: Record<string, unknown> = {};
 
     if (!adminMode) {
       where['is_published'] = true;
       where['OR'] = [{ expires_at: null }, { expires_at: { gt: now } }];
     }
-    if (q.type)   where['type']      = q.type;
+    if (q.type) where['type'] = q.type;
     if (q.pinned) where['is_pinned'] = true;
 
     const [items, total] = await Promise.all([
       this.prisma.newsItem.findMany({
-        where, skip, take: q.limit,
-        orderBy: [{ is_pinned: 'desc' }, { published_at: 'desc' }, { created_at: 'desc' }],
+        where,
+        skip,
+        take: q.limit,
+        orderBy: [
+          { is_pinned: 'desc' },
+          { published_at: 'desc' },
+          { created_at: 'desc' },
+        ],
         include: { author: { select: { id: true, name: true } } },
       }),
       this.prisma.newsItem.count({ where }),
@@ -36,20 +42,34 @@ export class NewsRepository {
     return this.prisma.newsItem.findFirst({
       where: {
         slug,
-        ...(published ? {
-          is_published: true,
-          OR: [{ expires_at: null }, { expires_at: { gt: now } }],
-        } : {}),
+        ...(published
+          ? {
+              is_published: true,
+              OR: [{ expires_at: null }, { expires_at: { gt: now } }],
+            }
+          : {}),
       },
       include: { author: { select: { id: true, name: true } } },
     });
   }
 
   findById(id: number | bigint) {
-    return this.prisma.newsItem.findUnique({ where: { id: BigInt(id) }, include: { author: { select: { id: true, name: true } } } });
+    return this.prisma.newsItem.findUnique({
+      where: { id: BigInt(id) },
+      include: { author: { select: { id: true, name: true } } },
+    });
   }
 
-  create(data: Record<string, unknown>) { return this.prisma.newsItem.create({ data: data as never }); }
-  update(id: number | bigint, data: Record<string, unknown>) { return this.prisma.newsItem.update({ where: { id: BigInt(id) }, data: data as never }); }
-  delete(id: number | bigint) { return this.prisma.newsItem.delete({ where: { id: BigInt(id) } }); }
+  create(data: Record<string, unknown>) {
+    return this.prisma.newsItem.create({ data: data as never });
+  }
+  update(id: number | bigint, data: Record<string, unknown>) {
+    return this.prisma.newsItem.update({
+      where: { id: BigInt(id) },
+      data: data as never,
+    });
+  }
+  delete(id: number | bigint) {
+    return this.prisma.newsItem.delete({ where: { id: BigInt(id) } });
+  }
 }

@@ -14,7 +14,6 @@ import { RolesGuard } from '../src/common/guards/roles.guard';
 import { EmailProcessor } from '../src/jobs/email.processor';
 import { NotificationEmailProcessor } from '../src/modules/notifications/channels/notification-email.processor';
 import { NotificationPushProcessor } from '../src/modules/notifications/channels/notification-push.processor';
-import { NotificationService } from '../src/modules/notifications/notification.service';
 import crypto from 'crypto';
 
 export interface E2ESetup {
@@ -53,7 +52,9 @@ export async function setupE2EApp(): Promise<E2ESetup> {
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
       const headerToken = req.headers['x-csrf-token'];
       if (!headerToken || headerToken !== token) {
-        return res.status(403).json({ success: false, message: 'Invalid CSRF Token' });
+        return res
+          .status(403)
+          .json({ success: false, message: 'Invalid CSRF Token' });
       }
     }
     next();

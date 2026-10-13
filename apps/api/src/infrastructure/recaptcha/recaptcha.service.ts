@@ -30,7 +30,10 @@ export class RecaptchaService {
       throw new BadRequestException(messages.common.recaptchaInvalid);
     }
 
-    const params = new URLSearchParams({ secret: this.secretKey, response: token });
+    const params = new URLSearchParams({
+      secret: this.secretKey,
+      response: token,
+    });
     const res = await fetch(
       `https://www.google.com/recaptcha/api/siteverify?${params}`,
       { method: 'POST' },

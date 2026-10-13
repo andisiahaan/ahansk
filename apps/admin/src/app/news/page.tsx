@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,6 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function NewsPage() {
-  const [items, setItems] = useState<NewsItem[]>([]);
   const [editing, setEditing] = useState<string | number | 'new' | null>(null);
   const [form, setForm] = useState<NewsFormState>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -53,18 +53,14 @@ export default function NewsPage() {
   const [sortBy, setSortBy] = useState('published_at');
   const [order, setOrder] = useState('desc');
 
-  const load = useCallback(async () => {
-    try {
+  const { data: newsData, refetch } = useQuery({
+    queryKey: ['admin-news'],
+    queryFn: async () => {
       const { data } = await api.get('/admin/news', { params: { limit: 100 } });
-      setItems(data.data?.items ?? []);
-    } catch {
-      toast.error('Failed to load news.');
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+      return (data.data?.items as NewsItem[]) ?? [];
+    },
+  });
+  const items = newsData ?? [];
 
   const startEdit = async (id: string | number) => {
     try {
@@ -95,7 +91,7 @@ export default function NewsPage() {
       toast.success('Saved.');
       setEditing(null);
       setForm(EMPTY);
-      await load();
+      await refetch();
     } catch {
       toast.error('Failed to save.');
     } finally {
@@ -107,7 +103,7 @@ export default function NewsPage() {
     if (!confirm('Delete this news item?')) return;
     try {
       await api.delete(`/admin/news/${id}`);
-      setItems((p) => p.filter((n) => n.id !== id));
+      await refetch();
       toast.success('Deleted.');
     } catch {
       toast.error('Failed to delete.');

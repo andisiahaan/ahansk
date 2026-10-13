@@ -14,4 +14,5 @@ export type { UploadContext } from '@ahansk/shared';
 export type DiskDriver = 'local' | 's3';
 
 /** Driver disk global — dari env DISK=local|s3. */
-export const DEFAULT_DISK: DiskDriver = (process.env['DISK'] ?? 'local') as DiskDriver;
+export const DEFAULT_DISK: DiskDriver = (process.env['DISK'] ??
+  'local') as DiskDriver;

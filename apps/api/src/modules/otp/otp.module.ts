@@ -6,10 +6,8 @@ import { OtpRepository } from './otp.repository';
 import { EmailService } from '../../infrastructure/email/email.service';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: QUEUE_EMAIL }),
-  ],
+  imports: [BullModule.registerQueue({ name: QUEUE_EMAIL })],
   providers: [OtpService, OtpRepository, EmailService],
-  exports:   [OtpService],
+  exports: [OtpService],
 })
 export class OtpModule {}

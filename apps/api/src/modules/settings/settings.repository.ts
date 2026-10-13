@@ -10,8 +10,13 @@ export class SettingsRepository {
     return this.prisma.setting.findUnique({ where: { key } });
   }
 
-  async upsert(key: string, settings: Record<string, unknown>): Promise<Setting> {
-    const json = settings as Parameters<typeof this.prisma.setting.create>[0]['data']['settings'];
+  async upsert(
+    key: string,
+    settings: Record<string, unknown>,
+  ): Promise<Setting> {
+    const json = settings as Parameters<
+      typeof this.prisma.setting.create
+    >[0]['data']['settings'];
     return this.prisma.setting.upsert({
       where: { key },
       create: { key, settings: json },

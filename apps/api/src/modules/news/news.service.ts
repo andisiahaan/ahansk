@@ -1,13 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NewsRepository } from './news.repository';
-import type { CreateNewsDto, UpdateNewsDto, ListNewsQueryDto } from './news.dto';
+import type {
+  CreateNewsDto,
+  UpdateNewsDto,
+  ListNewsQueryDto,
+} from './news.dto';
 
 @Injectable()
 export class NewsService {
   constructor(private readonly repo: NewsRepository) {}
 
-  listPublished(q: ListNewsQueryDto)   { return this.repo.list(q, false); }
-  listAll(q: ListNewsQueryDto)         { return this.repo.list(q, true); }
+  listPublished(q: ListNewsQueryDto) {
+    return this.repo.list(q, false);
+  }
+  listAll(q: ListNewsQueryDto) {
+    return this.repo.list(q, true);
+  }
 
   async getBySlug(slug: string, admin = false) {
     const item = await this.repo.findBySlug(slug, !admin);

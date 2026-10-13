@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import api from '@/lib/api';
 import {
@@ -21,11 +22,18 @@ import { cn } from '@/lib/cn';
 
 type AnySettings = AuthSettings | AppGeneralSettings | CustomTagsSettings | Record<string, unknown>;
 
+function getDefaultSettings(key: string): AnySettings {
+  if (key === SETTING_KEYS.APP) return DEFAULT_APP_SETTINGS;
+  if (key === SETTING_KEYS.AUTH) return DEFAULT_AUTH_SETTINGS;
+  if (key === SETTING_KEYS.CUSTOM_TAGS) return DEFAULT_CUSTOM_TAGS_SETTINGS;
+  return {};
+}
+
 export default function SettingsPage() {
   const t = useTranslations('settings');
+  const qc = useQueryClient();
   const [tab, setTab] = useState<string>(SETTING_KEYS.APP);
-  const [values, setValues] = useState<AnySettings>({});
-  const [loading, setLoading] = useState(true);
+  const [drafts, setDrafts] = useState<Record<string, AnySettings>>({});
   const [saving, setSaving] = useState(false);
 
   const TABS = [
@@ -34,31 +42,31 @@ export default function SettingsPage() {
     { key: SETTING_KEYS.CUSTOM_TAGS, label: t('tabs.custom_tags') },
   ];
 
-  const load = useCallback(async (key: string) => {
-    setLoading(true);
-    try {
-      const { data } = await api.get(`/admin/settings/${key}`);
-      const fetched = (data.data?.settings as AnySettings) ?? {};
-      setValues(fetched);
-    } catch {
-      if (key === SETTING_KEYS.APP) setValues(DEFAULT_APP_SETTINGS);
-      else if (key === SETTING_KEYS.AUTH) setValues(DEFAULT_AUTH_SETTINGS);
-      else if (key === SETTING_KEYS.CUSTOM_TAGS) setValues(DEFAULT_CUSTOM_TAGS_SETTINGS);
-      else setValues({});
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: serverSettings, isLoading } = useQuery({
+    queryKey: ['admin-settings', tab],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get(`/admin/settings/${tab}`);
+        return (data.data?.settings as AnySettings) ?? getDefaultSettings(tab);
+      } catch {
+        return getDefaultSettings(tab);
+      }
+    },
+  });
 
-  useEffect(() => {
-    load(tab);
-  }, [tab, load]);
+  const values = drafts[tab] ?? serverSettings ?? getDefaultSettings(tab);
 
   const save = async () => {
     setSaving(true);
     try {
       await api.patch(`/admin/settings/${tab}`, { settings: values });
       toast.success(t('actions.saved'));
+      await qc.invalidateQueries({ queryKey: ['admin-settings', tab] });
+      setDrafts((prev) => {
+        const next = { ...prev };
+        delete next[tab];
+        return next;
+      });
     } catch {
       toast.error('Failed to save settings.');
     } finally {
@@ -67,7 +75,10 @@ export default function SettingsPage() {
   };
 
   const handleFieldChange = (k: string, v: unknown) => {
-    setValues((prev) => ({ ...prev, [k]: v }));
+    setDrafts((prev) => ({
+      ...prev,
+      [tab]: { ...values, [k]: v },
+    }));
   };
 
   return (
@@ -95,7 +106,7 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-sm text-muted-foreground animate-pulse py-8">Loading settings…</p>
       ) : (
         <div className="space-y-6">
@@ -198,7 +209,7 @@ export default function SettingsPage() {
           )}
 
           <div className="pt-2">
-            <Button onClick={save} loading={saving} disabled={loading}>
+            <Button onClick={save} loading={saving} disabled={isLoading}>
               {saving ? t('actions.saving') : t('actions.save')}
             </Button>
           </div>

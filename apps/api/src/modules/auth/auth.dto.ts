@@ -1,9 +1,15 @@
 import { createZodDto } from '../../common/utils/zod.dto';
 import {
-  RegisterSchema, LoginSchema, GoogleAuthSchema,
-  ForgotPasswordSchema, ResetPasswordSchema,
-  EnableTotpSchema, DisableTotpSchema, VerifyTotpSchema,
-  RequestEmailChangeSchema, VerifyEmailChangeOtpSchema
+  RegisterSchema,
+  LoginSchema,
+  GoogleAuthSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
+  EnableTotpSchema,
+  DisableTotpSchema,
+  VerifyTotpSchema,
+  RequestEmailChangeSchema,
+  VerifyEmailChangeOtpSchema,
 } from '@ahansk/shared';
 
 export class RegisterDto extends createZodDto(RegisterSchema) {}
@@ -14,5 +20,9 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {}
 export class EnableTotpDto extends createZodDto(EnableTotpSchema) {}
 export class DisableTotpDto extends createZodDto(DisableTotpSchema) {}
 export class VerifyTotpDto extends createZodDto(VerifyTotpSchema) {}
-export class RequestEmailChangeDto extends createZodDto(RequestEmailChangeSchema) {}
-export class VerifyEmailChangeOtpDto extends createZodDto(VerifyEmailChangeOtpSchema) {}
+export class RequestEmailChangeDto extends createZodDto(
+  RequestEmailChangeSchema,
+) {}
+export class VerifyEmailChangeOtpDto extends createZodDto(
+  VerifyEmailChangeOtpSchema,
+) {}

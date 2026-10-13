@@ -37,7 +37,13 @@ import { AppService } from './app.service';
     LoggerModule.forRoot({
       pinoHttp: {
         redact: {
-          paths: ['req.headers.authorization', 'req.headers.cookie', 'req.body.password', 'req.body.token', 'req.body.refreshToken'],
+          paths: [
+            'req.headers.authorization',
+            'req.headers.cookie',
+            'req.body.password',
+            'req.body.token',
+            'req.body.refreshToken',
+          ],
           censor: '[REDACTED]',
         },
         transport:
@@ -67,7 +73,7 @@ import { AppService } from './app.service';
           const urlObj = new URL(redisUrl);
           urlObj.pathname = '/1';
           redisUrl = urlObj.toString();
-        } catch (e) {
+        } catch {
           redisUrl = redisUrl.replace(/\/$/, '') + '/1';
         }
         return {
@@ -76,7 +82,6 @@ import { AppService } from './app.service';
         };
       },
     }),
-
 
     // ─── Infrastructure ───────────────────────────────────────────────────────────
     PrismaModule,

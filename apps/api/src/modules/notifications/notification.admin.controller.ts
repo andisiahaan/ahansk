@@ -1,5 +1,11 @@
 import {
-  Controller, Get, Post, Body, Query, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { NotificationService } from './notification.service';
@@ -11,10 +17,7 @@ export class NotificationAdminController {
   constructor(private readonly svc: NotificationService) {}
 
   @Get()
-  async list(
-    @Query('page')  page?:  string,
-    @Query('limit') limit?: string,
-  ) {
+  async list(@Query('page') page?: string, @Query('limit') limit?: string) {
     return this.svc.getAllAdmin(Number(page) || 1, Number(limit) || 20);
   }
 
@@ -24,7 +27,12 @@ export class NotificationAdminController {
     if (dto.target === 'admins') {
       await this.svc.sendToAdmins(dto.type, dto.title, dto.message);
     } else if (dto.userIds?.length) {
-      await this.svc.sendBroadcast(dto.type, dto.title, dto.message, dto.userIds);
+      await this.svc.sendBroadcast(
+        dto.type,
+        dto.title,
+        dto.message,
+        dto.userIds,
+      );
     } else {
       await this.svc.sendToAllUsers(dto.type, dto.title, dto.message);
     }

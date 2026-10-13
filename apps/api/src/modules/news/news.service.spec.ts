@@ -18,10 +18,7 @@ describe('NewsService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        NewsService,
-        { provide: NewsRepository, useValue: mockRepo },
-      ],
+      providers: [NewsService, { provide: NewsRepository, useValue: mockRepo }],
     }).compile();
 
     service = module.get<NewsService>(NewsService);
@@ -34,7 +31,9 @@ describe('NewsService', () => {
   describe('getBySlug', () => {
     it('should throw NotFoundException if not found', async () => {
       mockRepo.findBySlug.mockResolvedValue(null);
-      await expect(service.getBySlug('test')).rejects.toThrow(NotFoundException);
+      await expect(service.getBySlug('test')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

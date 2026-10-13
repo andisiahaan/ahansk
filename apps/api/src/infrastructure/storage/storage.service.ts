@@ -48,7 +48,10 @@ export class StorageService {
     return DEFAULT_DISK;
   }
 
-  private resolveDriver(context: UploadContext, diskOverride?: DiskDriver): StorageDriver {
+  private resolveDriver(
+    context: UploadContext,
+    diskOverride?: DiskDriver,
+  ): StorageDriver {
     const disk = this.resolveDisk(context, diskOverride);
     return disk === 's3' ? this.s3Driver : this.localDriver;
   }
@@ -57,7 +60,11 @@ export class StorageService {
    * Upload file ke storage (local atau s3) secara terpusat.
    * Mengembalikan path relatif untuk disimpan ke DB (misal: "avatars/abc12345.webp").
    */
-  async upload(file: UploadedFile, context: UploadContext, options?: UploadOptions): Promise<string> {
+  async upload(
+    file: UploadedFile,
+    context: UploadContext,
+    options?: UploadOptions,
+  ): Promise<string> {
     return this.resolveDriver(context, options?.disk).upload(file, context);
   }
 
@@ -65,9 +72,23 @@ export class StorageService {
    * Menghasilkan Public URL lengkap untuk file yang diunggah.
    * Jika filePath sudah berupa absolute URL (e.g. Google avatar), dikembalikan apa adanya.
    */
-  getUrl(filePath: string, diskOverride?: DiskDriver): string {
-    if (!filePath) return '';
-    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+  getUrl(filePath: string, diskOverride?: DiskDriver): string;
+  getUrl(filePath: null | undefined, diskOverride?: DiskDriver): null;
+  getUrl(
+    filePath: string | null | undefined,
+    diskOverride?: DiskDriver,
+  ): string | null;
+  getUrl(
+    filePath: string | null | undefined,
+    diskOverride?: DiskDriver,
+  ): string | null {
+    if (filePath === null || filePath === undefined) return null;
+    if (filePath === '') return '';
+    if (
+      filePath.startsWith('http://') ||
+      filePath.startsWith('https://') ||
+      filePath.startsWith('data:')
+    ) {
       return filePath;
     }
 
@@ -104,6 +125,8 @@ export class StorageService {
       return;
     }
     // Jika tidak spesifik, hapus di local lalu fallback s3
-    await this.localDriver.delete(filePath).catch(() => this.s3Driver.delete(filePath));
+    await this.localDriver
+      .delete(filePath)
+      .catch(() => this.s3Driver.delete(filePath));
   }
 }

@@ -16,16 +16,7 @@ async function fetchNotifications(category?: string, isRead?: boolean): Promise<
   if (category) params.set('category', category);
   if (isRead !== undefined) params.set('isRead', String(isRead));
   const res = await api.get<{ data: NotifPage }>(`/notifications?${params}`);
-  const payload = res.data.data;
-  if (payload?.items) {
-    payload.items = payload.items.map((n: any) => ({
-      ...n,
-      isRead: n.isRead ?? n.is_read,
-      createdAt: n.createdAt ?? n.created_at,
-      readAt: n.readAt ?? n.read_at,
-    }));
-  }
-  return payload;
+  return res.data.data;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {

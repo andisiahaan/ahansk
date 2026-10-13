@@ -1,11 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { AuthRepository } from './auth.repository';
 import { NotificationService } from '../notifications/notification.service';
 import { BanService } from '../users/ban.service';
+import { StorageService } from '../../infrastructure/storage/storage.service';
 import { messages } from '@ahansk/shared';
 import type { AuthUser } from '@ahansk/shared';
 import {
@@ -22,6 +23,7 @@ export class AuthTokenService {
     private readonly config: ConfigService,
     private readonly notifications: NotificationService,
     private readonly banService: BanService,
+    private readonly storage: StorageService,
   ) {}
 
   signAccessToken(userId: number | bigint): string {
@@ -45,7 +47,10 @@ export class AuthTokenService {
     const tokenHash = crypto.createHash('sha256').update(raw).digest('hex');
     const days = this.config.get<number>('app.jwt.refreshExpiresDays', 7);
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    const accessExpires = this.config.get<string>('app.jwt.accessExpires', '15m');
+    const accessExpires = this.config.get<string>(
+      'app.jwt.accessExpires',
+      '15m',
+    );
 
     await this.repo.createRefreshToken({
       user_id: userId,
@@ -68,12 +73,16 @@ export class AuthTokenService {
     return { message: messages.auth.loginSuccess };
   }
 
-  async refresh(rawToken: string, res: Response, ip?: string, ua?: string): Promise<{ message: string }> {
+  async refresh(rawToken: string, res: Response): Promise<{ message: string }> {
     await this.processTokenRefresh(rawToken, res.req, res, false);
     return { message: 'Token refreshed' };
   }
 
-  async refreshSilently(rawToken: string, req: any, res: Response): Promise<AuthUser | null> {
+  async refreshSilently(
+    rawToken: string,
+    req: Request,
+    res: Response,
+  ): Promise<AuthUser | null> {
     try {
       return await this.processTokenRefresh(rawToken, req, res, true);
     } catch {
@@ -83,21 +92,26 @@ export class AuthTokenService {
 
   private async processTokenRefresh(
     rawToken: string,
-    req: any,
+    req: Request,
     res: Response,
     isSilent = false,
   ): Promise<AuthUser | null> {
     if (!rawToken) {
-      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      if (!isSilent)
+        throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
       return null;
     }
 
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
     const record = await this.repo.findRefreshToken(tokenHash);
 
     if (!record || record.expires_at < new Date()) {
       clearAuthCookies(req, res);
-      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      if (!isSilent)
+        throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
       return null;
     }
 
@@ -105,25 +119,32 @@ export class AuthTokenService {
     const isBanned = await this.banService.isUserBanned(userId);
     if (isBanned) {
       clearAuthCookies(req, res);
-      if (!isSilent) throw new UnauthorizedException('Your account has been banned. Please contact support.');
+      if (!isSilent)
+        throw new UnauthorizedException(
+          'Your account has been banned. Please contact support.',
+        );
       return null;
     }
 
     const user = await this.repo.findUserById(userId);
     if (!user || !user.is_active) {
       clearAuthCookies(req, res);
-      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      if (!isSilent)
+        throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
       return null;
     }
 
-    const accessExpires = this.config.get<string>('app.jwt.accessExpires', '15m');
+    const accessExpires = this.config.get<string>(
+      'app.jwt.accessExpires',
+      '15m',
+    );
     const authUser: AuthUser = {
       id: Number(user.id),
       email: user.email,
       name: user.name,
       role: user.role,
       twoFactorEnabled: user.totp_enabled,
-      avatar: user.avatar,
+      avatar: this.storage.getUrl(user.avatar),
     };
 
     // Grace period for token rotation race conditions (within 60s)
@@ -138,7 +159,8 @@ export class AuthTokenService {
         await this.repo.revokeAllUserRefreshTokens(record.user_id);
       }
       clearAuthCookies(req, res);
-      if (!isSilent) throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
+      if (!isSilent)
+        throw new UnauthorizedException(messages.auth.refreshTokenInvalid);
       return null;
     }
 
@@ -154,9 +176,13 @@ export class AuthTokenService {
   }
 
   async logout(res: Response): Promise<void> {
-    const rawToken = res.req?.cookies?.refresh_token as string | undefined;
+    const cookies = res.req?.cookies as Record<string, string> | undefined;
+    const rawToken = cookies?.refresh_token;
     if (rawToken) {
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
       await this.repo.revokeRefreshToken(tokenHash);
     }
     clearAuthCookies(res.req, res);

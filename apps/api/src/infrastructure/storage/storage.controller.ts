@@ -29,9 +29,12 @@ export class StorageController {
 
     if (disk === 's3') {
       try {
-        const file = await this.s3Driver.getObject(`${safeContext}/${safeFilename}`);
+        const file = await this.s3Driver.getObject(
+          `${safeContext}/${safeFilename}`,
+        );
         if (file.contentType) res.setHeader('Content-Type', file.contentType);
-        if (file.contentLength) res.setHeader('Content-Length', file.contentLength);
+        if (file.contentLength)
+          res.setHeader('Content-Length', file.contentLength);
         file.stream.pipe(res);
         return;
       } catch {
@@ -39,7 +42,11 @@ export class StorageController {
       }
     }
 
-    const filePath = path.join(this.localDriver.basePath, safeContext, safeFilename);
+    const filePath = path.join(
+      this.localDriver.basePath,
+      safeContext,
+      safeFilename,
+    );
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('File not found');
     }

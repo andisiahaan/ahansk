@@ -7,6 +7,7 @@ import { NotificationController } from './notification.controller';
 import { NotificationAdminController } from './notification.admin.controller';
 import { NotificationEmailProcessor } from './channels/notification-email.processor';
 import { NotificationPushProcessor } from './channels/notification-push.processor';
+import { NotificationBroadcastProcessor } from './channels/notification-broadcast.processor';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationPushProcessor } from './channels/notification-push.processo
     BullModule.registerQueue(
       { name: 'notification-email' },
       { name: 'notification-push' },
+      { name: 'notification-broadcast' },
     ),
   ],
   providers: [
@@ -21,11 +23,9 @@ import { NotificationPushProcessor } from './channels/notification-push.processo
     NotificationService,
     NotificationEmailProcessor,
     NotificationPushProcessor,
+    NotificationBroadcastProcessor,
   ],
-  controllers: [
-    NotificationController,
-    NotificationAdminController,
-  ],
+  controllers: [NotificationController, NotificationAdminController],
   exports: [NotificationService],
 })
 export class NotificationModule {}

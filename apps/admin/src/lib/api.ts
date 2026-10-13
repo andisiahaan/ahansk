@@ -63,9 +63,9 @@ api.interceptors.response.use(
       await api.post('/auth/refresh');
       flushQueue();
       return api(orig);
-    } catch (refreshErr: any) {
+    } catch (refreshErr: unknown) {
       flushQueue(refreshErr);
-      const status = refreshErr?.response?.status;
+      const status = (refreshErr as { response?: { status?: number } })?.response?.status;
       if (status === 401 || status === 403) {
         if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
           fetch('/api/auth/logout', { method: 'POST' }).finally(() => {

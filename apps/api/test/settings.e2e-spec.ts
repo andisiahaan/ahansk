@@ -10,7 +10,7 @@ describe('SettingsController (e2e)', () => {
   let adminAgent: any;
   let userAgent: any;
   let publicAgent: any;
-  
+
   let adminCsrfToken: string;
   let userCsrfToken: string;
 
@@ -20,20 +20,43 @@ describe('SettingsController (e2e)', () => {
     prisma = setup.prisma;
 
     // Cleanup and create test users
-    await prisma.user.deleteMany({ where: { email: { in: ['e2e_settings_admin@example.com', 'e2e_settings_user@example.com'] } } });
-    
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: [
+            'e2e_settings_admin@example.com',
+            'e2e_settings_user@example.com',
+          ],
+        },
+      },
+    });
+
     const passwordHash = await argon2.hash('password123');
     await prisma.user.create({
-      data: { email: 'e2e_settings_admin@example.com', name: 'Admin', password: passwordHash, role: 'ADMIN', email_verified_at: new Date(), is_active: true }
+      data: {
+        email: 'e2e_settings_admin@example.com',
+        name: 'Admin',
+        password: passwordHash,
+        role: 'ADMIN',
+        email_verified_at: new Date(),
+        is_active: true,
+      },
     });
     await prisma.user.create({
-      data: { email: 'e2e_settings_user@example.com', name: 'User', password: passwordHash, role: 'USER', email_verified_at: new Date(), is_active: true }
+      data: {
+        email: 'e2e_settings_user@example.com',
+        name: 'User',
+        password: passwordHash,
+        role: 'USER',
+        email_verified_at: new Date(),
+        is_active: true,
+      },
     });
 
     // Create test setting
     await prisma.setting.deleteMany({ where: { key: 'site_title' } });
     await prisma.setting.create({
-      data: { key: 'site_title', settings: { value: 'Ahansk Admin Panel' } }
+      data: { key: 'site_title', settings: { value: 'Ahansk Admin Panel' } },
     });
 
     adminAgent = request.agent(app.getHttpServer());
@@ -43,21 +66,30 @@ describe('SettingsController (e2e)', () => {
     // 1. Get CSRF token for admin
     let res = await adminAgent.get('/');
     let cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-    const adminCsrfCookie = cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
-    adminCsrfToken = adminCsrfCookie ? adminCsrfCookie.split(';')[0].split('=')[1] : '';
+    const adminCsrfCookie =
+      cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
+    adminCsrfToken = adminCsrfCookie
+      ? adminCsrfCookie.split(';')[0].split('=')[1]
+      : '';
 
     // 2. Login admin
     await adminAgent
       .post('/auth/login')
       .set('x-csrf-token', adminCsrfToken)
-      .send({ email: 'e2e_settings_admin@example.com', password: 'password123' })
+      .send({
+        email: 'e2e_settings_admin@example.com',
+        password: 'password123',
+      })
       .expect(200);
 
     // 3. Get CSRF token for user
     res = await userAgent.get('/');
-    cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-    const userCsrfCookie = cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
-    userCsrfToken = userCsrfCookie ? userCsrfCookie.split(';')[0].split('=')[1] : '';
+    cookies = res.headers['set-cookie'] || [];
+    const userCsrfCookie =
+      cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
+    userCsrfToken = userCsrfCookie
+      ? userCsrfCookie.split(';')[0].split('=')[1]
+      : '';
 
     // 4. Login user
     await userAgent
@@ -97,7 +129,7 @@ describe('SettingsController (e2e)', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.settings.value).toBe('Ahansk Admin Panel Updated');
-      
+
       // Clean up / revert
       await adminAgent
         .patch('/settings/site_title')

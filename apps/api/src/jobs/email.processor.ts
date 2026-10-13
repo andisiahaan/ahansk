@@ -34,12 +34,19 @@ export class EmailProcessor extends WorkerHost {
         await this.sendOtp(data.to, data.name, data.code, data.purpose);
       }
     } catch (err) {
-      this.logger.error(`Failed to send email [${data.type}] to ${data.to}`, err);
+      this.logger.error(
+        `Failed to send email [${data.type}] to ${data.to}`,
+        err,
+      );
       throw err;
     }
   }
 
-  private async sendVerification(to: string, name: string, token: string): Promise<void> {
+  private async sendVerification(
+    to: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
     const link = `${frontendUrl}/verify-email?token=${token}`;
     await this.transporter.sendMail({
@@ -50,7 +57,11 @@ export class EmailProcessor extends WorkerHost {
     });
   }
 
-  private async sendPasswordReset(to: string, name: string, token: string): Promise<void> {
+  private async sendPasswordReset(
+    to: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
     const link = `${frontendUrl}/reset-password?token=${token}`;
     await this.transporter.sendMail({
@@ -61,7 +72,12 @@ export class EmailProcessor extends WorkerHost {
     });
   }
 
-  private async sendOtp(to: string, name: string, code: string, purpose: string): Promise<void> {
+  private async sendOtp(
+    to: string,
+    name: string,
+    code: string,
+    purpose: string,
+  ): Promise<void> {
     await this.transporter.sendMail({
       from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,

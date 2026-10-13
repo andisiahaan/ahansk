@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useState, useCallback, use } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
@@ -35,41 +36,36 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const t = useTranslations('users');
   
-  const [user, setUser] = useState<UserDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: user, isLoading: loading, refetch: fetchUser } = useQuery({
+    queryKey: ['admin-user', id],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get(`/admin/users/${id}`);
+        return (data.data as UserDetail) ?? null;
+      } catch {
+        toast.error(t('messages.userNotFound'));
+        router.push('/users');
+        return null;
+      }
+    },
+  });
 
-  // Edit states
-  const [editName, setEditName] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editRole, setEditRole] = useState('USER');
-  const [editIsActive, setEditIsActive] = useState(true);
+  // Edit states with fallback to loaded user
+  const [draftName, setDraftName] = useState<string | null>(null);
+  const [draftEmail, setDraftEmail] = useState<string | null>(null);
+  const [draftRole, setDraftRole] = useState<string | null>(null);
+  const [draftIsActive, setDraftIsActive] = useState<boolean | null>(null);
   const [editPassword, setEditPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const editName = draftName ?? user?.name ?? '';
+  const editEmail = draftEmail ?? user?.email ?? '';
+  const editRole = draftRole ?? user?.role ?? 'USER';
+  const editIsActive = draftIsActive ?? user?.is_active ?? true;
 
   const [banReason, setBanReason] = useState('');
   const [banExpiresAt, setBanExpiresAt] = useState('');
   const [isBanning, setIsBanning] = useState(false);
-
-  const fetchUser = useCallback(async () => {
-    try {
-      const { data } = await api.get(`/admin/users/${id}`);
-      const u = data.data;
-      setUser(u);
-      setEditName(u.name);
-      setEditEmail(u.email);
-      setEditRole(u.role);
-      setEditIsActive(u.is_active);
-    } catch {
-      toast.error(t('messages.userNotFound'));
-      router.push('/users');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, router, t]);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +81,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       await api.patch(`/admin/users/${id}`, payload);
       toast.success(t('messages.updated') || 'User updated successfully');
       setEditPassword('');
+      setDraftName(null);
+      setDraftEmail(null);
+      setDraftRole(null);
+      setDraftIsActive(null);
       await fetchUser();
     } catch (err: unknown) {
       toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('messages.updateFailed'));
@@ -162,23 +162,23 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="name">{t('fields.name') || 'Name'}</Label>
-              <Input id="name" value={editName} onChange={(e) => setEditName(e.target.value)} required />
+              <Input id="name" value={editName} onChange={(e) => setDraftName(e.target.value)} required />
             </div>
             <div className="space-y-1">
               <Label htmlFor="email">{t('fields.email') || 'Email'}</Label>
-              <Input id="email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
+              <Input id="email" type="email" value={editEmail} onChange={(e) => setDraftEmail(e.target.value)} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="role">{t('fields.role') || 'Role'}</Label>
-                <select id="role" value={editRole} onChange={(e) => setEditRole(e.target.value)} className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <select id="role" value={editRole} onChange={(e) => setDraftRole(e.target.value)} className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <option value="USER">{t('roles.USER')}</option>
                   <option value="ADMIN">{t('roles.ADMIN')}</option>
                 </select>
               </div>
               <div className="space-y-1">
                 <Label htmlFor="status">{t('fields.status') || 'Status'}</Label>
-                <select id="status" value={editIsActive ? 'true' : 'false'} onChange={(e) => setEditIsActive(e.target.value === 'true')} className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <select id="status" value={editIsActive ? 'true' : 'false'} onChange={(e) => setDraftIsActive(e.target.value === 'true')} className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <option value="true">{t('status.active')}</option>
                   <option value="false">{t('status.inactive')}</option>
                 </select>

@@ -7,7 +7,6 @@ import { Settings, Shield, LogOut, ChevronDown, User } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 
 import { cn } from '@/lib/cn';
-import { getImageUrl } from '@/lib/api';
 
 interface AccountDropdownProps {
   className?: string;
@@ -45,7 +44,7 @@ export function AccountDropdown({ className }: AccountDropdownProps) {
     .toUpperCase()
     .slice(0, 2);
 
-  const avatarUrl = getImageUrl(user.avatar);
+  const avatarUrl = user.avatar;
 
   return (
     <div ref={ref} className={cn('relative', className)}>

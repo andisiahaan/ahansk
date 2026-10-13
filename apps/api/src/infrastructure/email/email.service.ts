@@ -32,7 +32,11 @@ export type EmailJob = EmailVerificationJob | PasswordResetJob | OtpEmailJob;
 export class EmailService {
   constructor(@InjectQueue(QUEUE_EMAIL) private readonly emailQueue: Queue) {}
 
-  async sendEmailVerification(to: string, name: string, token: string): Promise<void> {
+  async sendEmailVerification(
+    to: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
     await this.emailQueue.add('send', {
       type: 'email-verification',
       to,
@@ -41,7 +45,11 @@ export class EmailService {
     } satisfies EmailVerificationJob);
   }
 
-  async sendPasswordReset(to: string, name: string, token: string): Promise<void> {
+  async sendPasswordReset(
+    to: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
     await this.emailQueue.add('send', {
       type: 'password-reset',
       to,
@@ -50,7 +58,13 @@ export class EmailService {
     } satisfies PasswordResetJob);
   }
 
-  async sendOtpEmail(to: string, name: string, code: string, purpose: string, expiresAt: Date): Promise<void> {
+  async sendOtpEmail(
+    to: string,
+    name: string,
+    code: string,
+    purpose: string,
+    expiresAt: Date,
+  ): Promise<void> {
     await this.emailQueue.add('send', {
       type: 'otp',
       to,

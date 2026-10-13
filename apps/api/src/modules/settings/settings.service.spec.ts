@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SettingsService } from './settings.service';
 import { SettingsRepository } from './settings.repository';
 import { CacheService } from '../../infrastructure/cache/cache.service';
-import { NotFoundException } from '@nestjs/common';
 
 describe('SettingsService', () => {
   let service: SettingsService;

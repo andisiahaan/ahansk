@@ -15,10 +15,8 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/')
-      .expect(200);
-    
+    const res = await request(app.getHttpServer()).get('/').expect(200);
+
     expect(res.body.success).toBe(true);
     expect(res.body.data.features).toBeDefined();
   });

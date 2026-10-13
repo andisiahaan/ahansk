@@ -22,7 +22,7 @@ export class AppService {
       version: '1.0.0',
       features: {
         googleAuth: !!this.config.get<string>('app.google.clientId'),
-        recaptcha:  !!this.config.get<string>('app.recaptcha.secretKey'),
+        recaptcha: !!this.config.get<string>('app.recaptcha.secretKey'),
       },
     };
   }

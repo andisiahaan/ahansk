@@ -38,6 +38,10 @@ describe('NotificationService', () => {
         { provide: ConfigService, useValue: mockConfig },
         { provide: getQueueToken('notification-email'), useValue: mockQueue },
         { provide: getQueueToken('notification-push'), useValue: mockQueue },
+        {
+          provide: getQueueToken('notification-broadcast'),
+          useValue: mockQueue,
+        },
       ],
     }).compile();
 

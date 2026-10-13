@@ -1,13 +1,19 @@
 import { z } from 'zod';
 
-const emptyToUndefined = (val: unknown) => (typeof val === 'string' && val.trim() === '' ? undefined : val);
-const optionalUrl = () => z.preprocess(emptyToUndefined, z.string().url().optional());
-const optionalString = () => z.preprocess(emptyToUndefined, z.string().optional());
-const optionalEmail = () => z.preprocess(emptyToUndefined, z.string().email().optional());
+const emptyToUndefined = (val: unknown) =>
+  typeof val === 'string' && val.trim() === '' ? undefined : val;
+const optionalUrl = () =>
+  z.preprocess(emptyToUndefined, z.string().url().optional());
+const optionalString = () =>
+  z.preprocess(emptyToUndefined, z.string().optional());
+const optionalEmail = () =>
+  z.preprocess(emptyToUndefined, z.string().email().optional());
 
 export const envSchema = z.object({
   // ─── App ──────────────────────────────────────────────────────────────────
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.coerce.number().default(4000),
 
   // ─── Database ─────────────────────────────────────────────────────────────
@@ -41,8 +47,8 @@ export const envSchema = z.object({
   SMTP_FROM_ADDRESS: z.string().email(),
 
   // ─── Web Push (VAPID) ────────────────────────────────────────────────────────
-  VAPID_PUBLIC_KEY:    optionalString(),
-  VAPID_PRIVATE_KEY:   optionalString(),
+  VAPID_PUBLIC_KEY: optionalString(),
+  VAPID_PRIVATE_KEY: optionalString(),
   VAPID_CONTACT_EMAIL: optionalEmail(),
 
   // ─── Storage ──────────────────────────────────────────────────────────────
@@ -65,15 +71,25 @@ export function validate(config: Record<string, unknown>): Env {
   const result = envSchema.safeParse(config);
   if (!result.success) {
     const formatted = result.error.format();
-    throw new Error(`Environment validation failed:\n${JSON.stringify(formatted, null, 2)}`);
+    throw new Error(
+      `Environment validation failed:\n${JSON.stringify(formatted, null, 2)}`,
+    );
   }
 
   const env = result.data;
   if (env.DISK === 's3') {
     const key = env.S3_KEY || env.S3_ACCESS_KEY_ID;
     const secret = env.S3_SECRET || env.S3_SECRET_ACCESS_KEY;
-    if (!env.S3_ENDPOINT || !env.S3_BUCKET || !env.S3_REGION || !key || !secret) {
-      throw new Error('S3 configuration is incomplete. S3_ENDPOINT, S3_BUCKET, S3_REGION, and access key/secret are required when DISK=s3');
+    if (
+      !env.S3_ENDPOINT ||
+      !env.S3_BUCKET ||
+      !env.S3_REGION ||
+      !key ||
+      !secret
+    ) {
+      throw new Error(
+        'S3 configuration is incomplete. S3_ENDPOINT, S3_BUCKET, S3_REGION, and access key/secret are required when DISK=s3',
+      );
     }
   }
 

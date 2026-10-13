@@ -29,6 +29,7 @@ const themeScript = `
 `;
 
 import { QueryProvider } from '@/providers/query-provider';
+import { RecaptchaProvider } from '@/providers/recaptcha-provider';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
@@ -41,12 +42,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="antialiased">
         <IntlProvider locale={locale} messages={messages}>
-          <QueryProvider>
-            <ThemeProvider>
-              <AdminShell>{children}</AdminShell>
-              <Toaster />
-            </ThemeProvider>
-          </QueryProvider>
+          <RecaptchaProvider>
+            <QueryProvider>
+              <ThemeProvider>
+                <AdminShell>{children}</AdminShell>
+                <Toaster />
+              </ThemeProvider>
+            </QueryProvider>
+          </RecaptchaProvider>
         </IntlProvider>
       </body>
     </html>

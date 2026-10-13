@@ -9,10 +9,10 @@ describe('NotificationController (e2e)', () => {
   let prisma: PrismaService;
   let adminAgent: any;
   let userAgent: any;
-  
+
   let adminCsrfToken: string;
   let userCsrfToken: string;
-  
+
   let userId: number;
 
   beforeAll(async () => {
@@ -21,14 +21,34 @@ describe('NotificationController (e2e)', () => {
     prisma = setup.prisma;
 
     // Cleanup and create test users
-    await prisma.user.deleteMany({ where: { email: { in: ['e2e_notif_admin@example.com', 'e2e_notif_user@example.com'] } } });
-    
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: ['e2e_notif_admin@example.com', 'e2e_notif_user@example.com'],
+        },
+      },
+    });
+
     const passwordHash = await argon2.hash('password123');
     await prisma.user.create({
-      data: { email: 'e2e_notif_admin@example.com', name: 'Admin', password: passwordHash, role: 'ADMIN', email_verified_at: new Date(), is_active: true }
+      data: {
+        email: 'e2e_notif_admin@example.com',
+        name: 'Admin',
+        password: passwordHash,
+        role: 'ADMIN',
+        email_verified_at: new Date(),
+        is_active: true,
+      },
     });
     const user = await prisma.user.create({
-      data: { email: 'e2e_notif_user@example.com', name: 'User', password: passwordHash, role: 'USER', email_verified_at: new Date(), is_active: true }
+      data: {
+        email: 'e2e_notif_user@example.com',
+        name: 'User',
+        password: passwordHash,
+        role: 'USER',
+        email_verified_at: new Date(),
+        is_active: true,
+      },
     });
     userId = Number(user.id);
 
@@ -38,8 +58,11 @@ describe('NotificationController (e2e)', () => {
     // Login Admin
     let res = await adminAgent.get('/');
     let cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-    const adminCsrfCookie = cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
-    adminCsrfToken = adminCsrfCookie ? adminCsrfCookie.split(';')[0].split('=')[1] : '';
+    const adminCsrfCookie =
+      cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
+    adminCsrfToken = adminCsrfCookie
+      ? adminCsrfCookie.split(';')[0].split('=')[1]
+      : '';
 
     await adminAgent
       .post('/auth/login')
@@ -49,16 +72,18 @@ describe('NotificationController (e2e)', () => {
 
     // Login User
     res = await userAgent.get('/');
-    cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-    const userCsrfCookie = cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
-    userCsrfToken = userCsrfCookie ? userCsrfCookie.split(';')[0].split('=')[1] : '';
+    cookies = res.headers['set-cookie'] || [];
+    const userCsrfCookie =
+      cookies.find((c: string) => c.startsWith('csrf_token=')) || '';
+    userCsrfToken = userCsrfCookie
+      ? userCsrfCookie.split(';')[0].split('=')[1]
+      : '';
 
     await userAgent
       .post('/auth/login')
       .set('x-csrf-token', userCsrfToken)
       .send({ email: 'e2e_notif_user@example.com', password: 'password123' })
       .expect(200);
-
   }, 30000);
 
   afterAll(async () => {
@@ -74,7 +99,7 @@ describe('NotificationController (e2e)', () => {
           type: 'system.announcement',
           title: 'E2E Broadcast',
           message: 'This is a test broadcast',
-          userIds: [userId]
+          userIds: [userId],
         })
         .expect(200);
 
@@ -96,31 +121,39 @@ describe('NotificationController (e2e)', () => {
       const res = await userAgent.get('/notifications').expect(200);
       expect(res.body.data.items).toBeDefined();
       expect(res.body.data.meta).toBeDefined();
-      
-      const notif = res.body.data.items.find((n: any) => n.title === 'E2E Broadcast');
+
+      const notif = res.body.data.items.find(
+        (n: any) => n.title === 'E2E Broadcast',
+      );
       expect(notif).toBeDefined();
       expect(notif.is_read).toBe(false);
     });
 
     it('should get unread count', async () => {
-      const res = await userAgent.get('/notifications/unread-count').expect(200);
+      const res = await userAgent
+        .get('/notifications/unread-count')
+        .expect(200);
       expect(typeof res.body.data.count).toBe('number');
       expect(res.body.data.count).toBeGreaterThan(0);
     });
 
     it('should mark a notification as read', async () => {
       const listRes = await userAgent.get('/notifications').expect(200);
-      const notif = listRes.body.data.items.find((n: any) => n.title === 'E2E Broadcast');
-      
+      const notif = listRes.body.data.items.find(
+        (n: any) => n.title === 'E2E Broadcast',
+      );
+
       const res = await userAgent
         .patch(`/notifications/${notif.id}/read`)
         .set('x-csrf-token', userCsrfToken)
         .expect(200);
-      
+
       expect(res.body.data.message).toBe('Marked as read');
 
       const updatedList = await userAgent.get('/notifications').expect(200);
-      const updatedNotif = updatedList.body.data.items.find((n: any) => n.id === notif.id);
+      const updatedNotif = updatedList.body.data.items.find(
+        (n: any) => n.id === notif.id,
+      );
       expect(updatedNotif.is_read).toBe(true);
     });
 
@@ -129,10 +162,12 @@ describe('NotificationController (e2e)', () => {
         .patch('/notifications/read-all')
         .set('x-csrf-token', userCsrfToken)
         .expect(200);
-      
+
       expect(res.body.data.message).toBe('All marked as read');
-      
-      const unreadRes = await userAgent.get('/notifications/unread-count').expect(200);
+
+      const unreadRes = await userAgent
+        .get('/notifications/unread-count')
+        .expect(200);
       expect(unreadRes.body.data.count).toBe(0);
     });
   });
@@ -148,10 +183,10 @@ describe('NotificationController (e2e)', () => {
         .patch('/notifications/preferences')
         .set('x-csrf-token', userCsrfToken)
         .send({
-          channels: { email: false }
+          channels: { email: false },
         })
         .expect(200);
-      
+
       expect(res.body.data.message).toBe('Preferences saved');
     });
   });
@@ -167,17 +202,21 @@ describe('NotificationController (e2e)', () => {
           endpoint: 'https://fcm.googleapis.com/fcm/send/e2e-push',
           p256dh: 'e2e-p256dh',
           auth: 'e2e-auth',
-          userAgent: 'E2E Agent'
+          userAgent: 'E2E Agent',
         })
         .expect(200);
-      
+
       expect(res.body.data.message).toBe('Subscribed');
     });
 
     it('should list push subscriptions', async () => {
-      const res = await userAgent.get('/notifications/push/subscriptions').expect(200);
+      const res = await userAgent
+        .get('/notifications/push/subscriptions')
+        .expect(200);
       expect(res.body.data.length).toBeGreaterThan(0);
-      expect(res.body.data[0].endpoint).toBe('https://fcm.googleapis.com/fcm/send/e2e-push');
+      expect(res.body.data[0].endpoint).toBe(
+        'https://fcm.googleapis.com/fcm/send/e2e-push',
+      );
       subId = res.body.data[0].id;
     });
 
@@ -186,10 +225,12 @@ describe('NotificationController (e2e)', () => {
         .delete(`/notifications/push/subscriptions/${subId}`)
         .set('x-csrf-token', userCsrfToken)
         .expect(200);
-      
+
       expect(res.body.data.message).toBe('Unsubscribed');
-      
-      const listRes = await userAgent.get('/notifications/push/subscriptions').expect(200);
+
+      const listRes = await userAgent
+        .get('/notifications/push/subscriptions')
+        .expect(200);
       expect(listRes.body.data.some((s: any) => s.id === subId)).toBe(false);
     });
 
@@ -201,10 +242,10 @@ describe('NotificationController (e2e)', () => {
         .send({
           endpoint: 'https://fcm.googleapis.com/fcm/send/e2e-push-2',
           p256dh: 'e2e-p256dh',
-          auth: 'e2e-auth'
+          auth: 'e2e-auth',
         })
         .expect(200);
-      
+
       const res = await userAgent
         .delete('/notifications/push/unsubscribe')
         .set('x-csrf-token', userCsrfToken)

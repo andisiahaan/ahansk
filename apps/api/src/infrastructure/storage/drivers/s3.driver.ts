@@ -21,10 +21,10 @@ export class S3Driver implements StorageDriver {
   constructor(private readonly config: ConfigService) {
     this.bucket = this.config.get<string>('app.storage.s3.bucket', '');
     this.client = new S3Client({
-      endpoint:  this.config.get<string>('app.storage.s3.endpoint'),
-      region:    this.config.get<string>('app.storage.s3.region', 'auto'),
+      endpoint: this.config.get<string>('app.storage.s3.endpoint'),
+      region: this.config.get<string>('app.storage.s3.region', 'auto'),
       credentials: {
-        accessKeyId:     this.config.get<string>('app.storage.s3.key', ''),
+        accessKeyId: this.config.get<string>('app.storage.s3.key', ''),
         secretAccessKey: this.config.get<string>('app.storage.s3.secret', ''),
       },
       forcePathStyle: true,
@@ -33,28 +33,38 @@ export class S3Driver implements StorageDriver {
 
   async upload(file: UploadedFile, context: UploadContext): Promise<string> {
     const { prefix } = UPLOAD_CONFIGS[context];
-    const ext        = path.extname(file.originalname).toLowerCase();
-    const key        = `${prefix}/${crypto.randomBytes(16).toString('hex')}${ext}`;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const key = `${prefix}/${crypto.randomBytes(16).toString('hex')}${ext}`;
 
-    await this.client.send(new PutObjectCommand({
-      Bucket:      this.bucket,
-      Key:         key,
-      Body:        file.buffer,
-      ContentType: file.mimetype,
-    }));
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      }),
+    );
 
     return key;
   }
 
   async delete(filePath: string): Promise<void> {
-    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: filePath }));
+    await this.client.send(
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: filePath }),
+    );
   }
 
-  async getObject(key: string): Promise<{ stream: Readable; contentType?: string; contentLength?: number }> {
-    const response = await this.client.send(new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    }));
+  async getObject(key: string): Promise<{
+    stream: Readable;
+    contentType?: string;
+    contentLength?: number;
+  }> {
+    const response = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
     return {
       stream: response.Body as unknown as Readable,
       contentType: response.ContentType,

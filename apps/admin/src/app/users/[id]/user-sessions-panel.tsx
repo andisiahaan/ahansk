@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
@@ -9,28 +10,31 @@ interface Session { id: number; user_agent: string | null; ip_address: string | 
 interface Activity { id: number; type: string; ip_address: string | null; success: boolean; created_at: string }
 
 export function UserSessionsPanel({ userId }: { userId: string | number }) {
-  const [sessions, setSessions]   = useState<Session[]>([]);
-  const [activity, setActivity]   = useState<Activity[]>([]);
   const [revoking, setRevoking]   = useState<number | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
   const [tab, setTab]             = useState<'sessions' | 'activity'>('sessions');
 
-  const load = useCallback(async () => {
-    const [s, a] = await Promise.allSettled([
-      api.get(`/admin/users/${userId}/sessions`),
-      api.get(`/admin/users/${userId}/activity`),
-    ]);
-    if (s.status === 'fulfilled') setSessions(s.value.data.data ?? []);
-    if (a.status === 'fulfilled') setActivity(a.value.data.data ?? []);
-  }, [userId]);
+  const { data: sessions = [], refetch: refetchSessions } = useQuery({
+    queryKey: ['admin-user-sessions', userId],
+    queryFn: async () => {
+      const res = await api.get(`/admin/users/${userId}/sessions`);
+      return (res.data.data as Session[]) ?? [];
+    },
+  });
 
-  useEffect(() => { load(); }, [load]);
+  const { data: activity = [] } = useQuery({
+    queryKey: ['admin-user-activity', userId],
+    queryFn: async () => {
+      const res = await api.get(`/admin/users/${userId}/activity`);
+      return (res.data.data as Activity[]) ?? [];
+    },
+  });
 
   const revoke = async (tokenId: number) => {
     setRevoking(tokenId);
     try {
       await api.delete(`/admin/users/${userId}/sessions/${tokenId}`);
-      setSessions((prev) => prev.filter((s) => s.id !== tokenId));
+      await refetchSessions();
       toast.success('Session revoked.');
     } catch { toast.error('Failed to revoke session.'); }
     finally { setRevoking(null); }
@@ -41,7 +45,7 @@ export function UserSessionsPanel({ userId }: { userId: string | number }) {
     setRevokingAll(true);
     try {
       await api.delete(`/admin/users/${userId}/sessions`);
-      setSessions([]);
+      await refetchSessions();
       toast.success('All sessions revoked.');
     } catch { toast.error('Failed to revoke sessions.'); }
     finally { setRevokingAll(false); }

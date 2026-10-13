@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -15,12 +15,12 @@ export interface Toast {
 
 // ─── Store (module-level singleton) ──────────────────────────────────────────
 
-type Listener = (toasts: Toast[]) => void;
+type Listener = () => void;
 let toasts: Toast[] = [];
 const listeners: Set<Listener> = new Set();
 
 function notify() {
-  listeners.forEach((l) => l([...toasts]));
+  listeners.forEach((l) => l());
 }
 
 export const toast = {
@@ -61,7 +61,8 @@ function ToastItem({ t }: { t: Toast }) {
   const c = COLORS[t.type];
 
   useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
+    const frame = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return (
@@ -95,17 +96,28 @@ function ToastItem({ t }: { t: Toast }) {
 
 // ─── Toaster (render this once in layout) ────────────────────────────────────
 
+const emptySubscribe = () => () => {};
+const emptyToasts: Toast[] = [];
+
 export function Toaster() {
-  const [items, setItems] = useState<Toast[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
-  useEffect(() => {
-    setMounted(true);
-    listeners.add(setItems);
-    return () => { listeners.delete(setItems); };
-  }, []);
+  const items = useSyncExternalStore(
+    (callback) => {
+      listeners.add(callback);
+      return () => {
+        listeners.delete(callback);
+      };
+    },
+    () => toasts,
+    () => emptyToasts,
+  );
 
-  if (!mounted) return null;
+  if (!isMounted) return null;
 
   return createPortal(
     <div style={{

@@ -1,8 +1,9 @@
 'use client';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Logo } from '@ahansk/ui';
 import { Button } from '@/components/ui/button';
@@ -12,33 +13,22 @@ function VerifyEmailContent() {
   const params = useSearchParams();
   const token = params.get('token');
 
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-  const [errorMessage, setErrorMessage] = useState('');
+  const { isPending, error, isSuccess } = useQuery({
+    queryKey: ['verify-email', token],
+    queryFn: async () => {
+      if (!token) throw new Error(t('verifyEmail.invalidToken'));
+      const res = await api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
+      return res.data;
+    },
+    retry: false,
+    enabled: !!token,
+  });
 
-  useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setErrorMessage(t('verifyEmail.invalidToken'));
-      return;
-    }
-
-    let isMounted = true;
-    api
-      .get(`/auth/verify-email?token=${encodeURIComponent(token)}`)
-      .then(() => {
-        if (isMounted) setStatus('success');
-      })
-      .catch((err: unknown) => {
-        if (!isMounted) return;
-        setStatus('error');
-        const errObj = err as { response?: { data?: { message?: string } } };
-        setErrorMessage(errObj.response?.data?.message || t('verifyEmail.failed'));
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [token, t]);
+  const isInvalidToken = !token;
+  const status = isPending && !isInvalidToken ? 'verifying' : (isSuccess ? 'success' : 'error');
+  const errorMessage = isInvalidToken
+    ? t('verifyEmail.invalidToken')
+    : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message || (error as Error)?.message || t('verifyEmail.failed'));
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">

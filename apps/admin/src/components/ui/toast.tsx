@@ -1,14 +1,14 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 export interface Toast { id: string; type: ToastType; message: string; duration?: number; }
 
-type Listener = (toasts: Toast[]) => void;
+type Listener = () => void;
 let toasts: Toast[] = [];
 const listeners: Set<Listener> = new Set();
-function notify() { listeners.forEach((l) => l([...toasts])); }
+function notify() { listeners.forEach((l) => l()); }
 
 export const toast = {
   show(type: ToastType, message: string, duration = 4000): string {
@@ -36,7 +36,10 @@ const COLORS: Record<ToastType, { bg: string; border: string; icon: string }> = 
 function ToastItem({ t }: { t: Toast }) {
   const [visible, setVisible] = useState(false);
   const c = COLORS[t.type];
-  useEffect(() => { requestAnimationFrame(() => setVisible(true)); }, []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <div onClick={() => toast.dismiss(t.id)} style={{
@@ -56,11 +59,29 @@ function ToastItem({ t }: { t: Toast }) {
   );
 }
 
+const emptySubscribe = () => () => {};
+const emptyToasts: Toast[] = [];
+
 export function Toaster() {
-  const [items, setItems] = useState<Toast[]>([]);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); listeners.add(setItems); return () => { listeners.delete(setItems); }; }, []);
-  if (!mounted) return null;
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+
+  const items = useSyncExternalStore(
+    (callback) => {
+      listeners.add(callback);
+      return () => {
+        listeners.delete(callback);
+      };
+    },
+    () => toasts,
+    () => emptyToasts,
+  );
+
+  if (!isMounted) return null;
+
   return createPortal(
     <div style={{ position: 'fixed', bottom: '1.25rem', right: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 9999, pointerEvents: 'none' }}>
       {items.map((t) => <div key={t.id} style={{ pointerEvents: 'auto' }}><ToastItem t={t} /></div>)}

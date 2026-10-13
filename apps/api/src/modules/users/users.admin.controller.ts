@@ -1,13 +1,27 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, HttpCode, HttpStatus, ParseIntPipe,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { BanService } from './ban.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '@ahansk/shared';
-import { CreateUserDto, UpdateUserDto, BanUserDto, UserQueryDto } from './users.dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  BanUserDto,
+  UserQueryDto,
+} from './users.dto';
 
 @Roles('ADMIN')
 @Controller('admin/users')
@@ -69,12 +83,14 @@ export class UsersAdminController {
 
   @Get(':id/sessions')
   async getSessions(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.getActiveSessions(id);
+    return await this.usersService.getActiveSessions(id);
   }
 
   @Delete(':id/sessions')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async revokeAllSessions(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async revokeAllSessions(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     await this.usersService.revokeAllSessions(id);
   }
 
@@ -89,6 +105,6 @@ export class UsersAdminController {
 
   @Get(':id/activity')
   async getActivity(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.getActivityLog(id);
+    return await this.usersService.getActivityLog(id);
   }
 }

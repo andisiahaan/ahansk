@@ -5,25 +5,25 @@ import type { Job } from 'bullmq';
 import * as nodemailer from 'nodemailer';
 
 export interface NotificationEmailJob {
-  userId:  number | bigint;
-  type:    string;
-  title:   string;
+  userId: number | bigint;
+  type: string;
+  title: string;
   message: string;
-  url?:    string;
-  to:      string;
-  name:    string;
+  url?: string;
+  to: string;
+  name: string;
 }
 
 @Processor('notification-email')
 export class NotificationEmailProcessor extends WorkerHost {
-  private readonly logger      = new Logger(NotificationEmailProcessor.name);
+  private readonly logger = new Logger(NotificationEmailProcessor.name);
   private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly config: ConfigService) {
     super();
     this.transporter = nodemailer.createTransport({
-      host:   this.config.get<string>('app.smtp.host'),
-      port:   this.config.get<number>('app.smtp.port'),
+      host: this.config.get<string>('app.smtp.host'),
+      port: this.config.get<number>('app.smtp.port'),
       secure: this.config.get<number>('app.smtp.port') === 465,
       auth: {
         user: this.config.get<string>('app.smtp.user') || undefined,
@@ -36,10 +36,10 @@ export class NotificationEmailProcessor extends WorkerHost {
     const { to, name, title, message, url } = job.data;
     try {
       await this.transporter.sendMail({
-        from:    `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
+        from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
         to,
         subject: title,
-        html:    this.buildHtml(name, title, message, url),
+        html: this.buildHtml(name, title, message, url),
       });
     } catch (err) {
       this.logger.error(`[notification:email] Failed to ${to}`, err);
@@ -47,7 +47,12 @@ export class NotificationEmailProcessor extends WorkerHost {
     }
   }
 
-  private buildHtml(name: string, title: string, message: string, url?: string): string {
+  private buildHtml(
+    name: string,
+    title: string,
+    message: string,
+    url?: string,
+  ): string {
     const actionBtn = url
       ? `<p style="text-align:center;margin:24px 0"><a href="${url}" style="background:#4f46e5;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">${title}</a></p>`
       : '';

@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 import { SettingsRepository } from './settings.repository';
 import {
-  messages,
   SETTING_KEYS,
   DEFAULT_APP_SETTINGS,
   DEFAULT_AUTH_SETTINGS,
@@ -28,7 +27,7 @@ export class SettingsService {
       case SETTING_KEYS.AUTH:
         return DEFAULT_AUTH_SETTINGS as unknown as Record<string, unknown>;
       case SETTING_KEYS.CUSTOM_TAGS:
-        return DEFAULT_CUSTOM_TAGS_SETTINGS as unknown as Record<string, unknown>;
+        return DEFAULT_CUSTOM_TAGS_SETTINGS;
       default:
         return {};
     }
@@ -67,7 +66,7 @@ export class SettingsService {
     const defaults = this.getDefault(key);
     const mergedSettings = {
       ...defaults,
-      ...(dto.settings as Record<string, unknown>),
+      ...dto.settings,
     };
     const setting = await this.repo.upsert(key, mergedSettings);
     await this.cache.del(CACHE_KEY_SETTINGS_ENTITY(key));
@@ -77,7 +76,9 @@ export class SettingsService {
 
   async getAuthSettings(): Promise<AuthSettings> {
     try {
-      const res = (await this.getByKey(SETTING_KEYS.AUTH)) as any;
+      const res = (await this.getByKey(SETTING_KEYS.AUTH)) as {
+        settings?: unknown;
+      };
       return (res?.settings ?? DEFAULT_AUTH_SETTINGS) as AuthSettings;
     } catch {
       return DEFAULT_AUTH_SETTINGS;

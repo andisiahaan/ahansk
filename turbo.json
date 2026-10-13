@@ -1,6 +1,16 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "NODE_ENV",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+    "NEXT_PUBLIC_RECAPTCHA_SITE_KEY",
+    "NEXT_PUBLIC_DASHBOARD_PATH",
+    "NEXT_PUBLIC_FRONTEND_URL",
+    "NEXT_PUBLIC_ADMIN_URL",
+    "NEXT_PUBLIC_VAPID_PUBLIC_KEY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

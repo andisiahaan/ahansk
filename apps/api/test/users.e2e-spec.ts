@@ -2,7 +2,6 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { PrismaService } from './../src/infrastructure/prisma/prisma.service';
 import { setupE2EApp, teardownE2EApp } from './e2e-setup';
-import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 
 describe('UsersController (e2e)', () => {
@@ -17,11 +16,13 @@ describe('UsersController (e2e)', () => {
     prisma = setup.prisma;
 
     // Cleanup before tests
-    await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e_user' } } });
+    await prisma.user.deleteMany({
+      where: { email: { startsWith: 'e2e_user' } },
+    });
 
     // Setup an admin user for admin-only routes
     const passwordHash = await argon2.hash('admin123');
-    const adminUser = await prisma.user.create({
+    await prisma.user.create({
       data: {
         email: 'e2e_user_admin@example.com',
         name: 'E2E Admin',
@@ -29,13 +30,14 @@ describe('UsersController (e2e)', () => {
         role: 'ADMIN',
         email_verified_at: new Date(),
         is_active: true,
-      }
+      },
     });
 
     // Get CSRF and Session
     const res = await request(app.getHttpServer()).get('/');
     const cookies = (res.headers['set-cookie'] as unknown as string[]) || [];
-    const csrfCookie = cookies.find((c: string) => c.startsWith('csrf_token=')) || '' || '';
+    const csrfCookie =
+      cookies.find((c: string) => c.startsWith('csrf_token=')) || '' || '';
     csrfToken = csrfCookie.split(';')[0].split('=')[1] || '';
 
     const loginRes = await request(app.getHttpServer())
@@ -45,14 +47,20 @@ describe('UsersController (e2e)', () => {
       .send({ email: 'e2e_user_admin@example.com', password: 'admin123' })
       .expect(200);
 
-    const loginCookies = (loginRes.headers['set-cookie'] as unknown as string[]) || [];
-    const accessCookie = loginCookies.find((c: string) => c.startsWith('access_token=')) || '' || '';
+    const loginCookies =
+      (loginRes.headers['set-cookie'] as unknown as string[]) || [];
+    const accessCookie =
+      loginCookies.find((c: string) => c.startsWith('access_token=')) ||
+      '' ||
+      '';
     adminToken = accessCookie.split(';')[0].split('=')[1] || '';
   });
 
   afterAll(async () => {
     if (prisma) {
-      await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e_user' } } });
+      await prisma.user.deleteMany({
+        where: { email: { startsWith: 'e2e_user' } },
+      });
     }
     await teardownE2EApp(app);
   });
@@ -70,9 +78,7 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should block non-admin access', async () => {
-      await request(app.getHttpServer())
-        .get('/users')
-        .expect(401);
+      await request(app.getHttpServer()).get('/users').expect(401);
     });
   });
 });

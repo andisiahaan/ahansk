@@ -6,10 +6,10 @@ import * as webpush from 'web-push';
 import { NotificationRepository } from '../notification.repository';
 
 export interface NotificationPushJob {
-  userId:  number | bigint;
-  title:   string;
+  userId: number | bigint;
+  title: string;
   message: string;
-  url?:    string;
+  url?: string;
 }
 
 @Processor('notification-push')
@@ -26,18 +26,15 @@ export class NotificationPushProcessor extends WorkerHost {
     const contactEmail = this.config.get<string>('app.vapid.contactEmail');
 
     if (publicKey && privateKey && contactEmail) {
-      webpush.setVapidDetails(
-        `mailto:${contactEmail}`,
-        publicKey,
-        privateKey,
-      );
+      webpush.setVapidDetails(`mailto:${contactEmail}`, publicKey, privateKey);
     }
   }
 
   async process(job: Job<NotificationPushJob>): Promise<void> {
     const { userId, title, message, url } = job.data;
 
-    const subscriptions = await this.repo.findPushSubscriptionsForSending(userId);
+    const subscriptions =
+      await this.repo.findPushSubscriptionsForSending(userId);
     if (!subscriptions.length) return;
 
     const payload = JSON.stringify({ title, body: message, url: url ?? '/' });
@@ -46,7 +43,10 @@ export class NotificationPushProcessor extends WorkerHost {
       subscriptions.map(async (sub) => {
         try {
           await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            },
             payload,
             { TTL: 86400 },
           );

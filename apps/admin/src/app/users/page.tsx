@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
@@ -22,11 +23,14 @@ interface User {
   email_verified_at: string | null;
 }
 
+interface UsersApiResponse {
+  items: User[];
+  meta: { total: number; totalPages: number };
+}
+
 export default function UsersPage() {
   const t = useTranslations('users');
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -37,12 +41,10 @@ export default function UsersPage() {
   const [isActiveStr, setIsActiveStr] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [order, setOrder] = useState('desc');
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: usersData, isLoading: loading, refetch } = useQuery({
+    queryKey: ['admin-users', page, search, role, isActiveStr, sortBy, order],
+    queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '20',
@@ -52,27 +54,20 @@ export default function UsersPage() {
         sortBy,
         order,
       });
-      const res = await api.get<{ data: any }>(`/admin/users?${params.toString()}`);
-      const payload = res.data?.data;
-      setUsers(payload?.items ?? (Array.isArray(payload) ? payload : []));
-      setTotalPages(payload?.meta?.totalPages ?? 1);
-      setTotal(payload?.meta?.total ?? 0);
-    } catch {
-      toast.error(t('messages.loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [t, page, search, role, isActiveStr, sortBy, order]);
+      const res = await api.get<{ data: UsersApiResponse }>(`/admin/users?${params.toString()}`);
+      return res.data?.data;
+    },
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const users = usersData?.items ?? [];
+  const totalPages = usersData?.meta?.totalPages ?? 1;
+  const total = usersData?.meta?.total ?? 0;
 
-  const toggleActive = async (id: string, is_active: boolean) => {
+  const toggleActive = async (id: string, nextActive: boolean) => {
     try {
-      await api.patch(`/admin/users/${id}`, { is_active: !is_active });
-      setUsers((p) => p.map((u) => (u.id === id ? { ...u, is_active: !is_active } : u)));
-      toast.success(is_active ? t('messages.disabled') : t('messages.enabled'));
+      await api.patch(`/admin/users/${id}`, { is_active: nextActive });
+      toast.success(nextActive ? t('messages.enabled') : t('messages.disabled'));
+      void refetch();
     } catch {
       toast.error(t('messages.updateFailed'));
     }
@@ -83,11 +78,12 @@ export default function UsersPage() {
     setDeleteLoading(true);
     try {
       await api.delete(`/admin/users/${deletingId}`);
-      setUsers((p) => p.filter((u) => u.id !== deletingId));
       toast.success(t('messages.deleted'));
       setDeletingId(null);
-    } catch {
-      toast.error(t('messages.deleteFailed'));
+      void refetch();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? t('messages.deleteFailed'));
     } finally {
       setDeleteLoading(false);
     }
@@ -191,7 +187,7 @@ export default function UsersPage() {
                     <Badge variant={u.role === 'ADMIN' ? 'blue' : 'gray'}>{t(`roles.${u.role as 'ADMIN' | 'USER'}`)}</Badge>
                   </td>
                   <td className="px-6 py-3.5" onClick={(e) => e.stopPropagation()}>
-                    <Switch checked={u.is_active} onCheckedChange={(checked) => toggleActive(u.id, !checked)} />
+                    <Switch checked={u.is_active} onCheckedChange={(checked) => toggleActive(u.id, checked)} />
                   </td>
                   <td className="px-6 py-3.5">
                     <Badge variant={u.email_verified_at ? 'green' : 'gray'}>
@@ -224,7 +220,7 @@ export default function UsersPage() {
       <CreateUserModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        onCreated={fetchUsers}
+        onCreated={() => void refetch()}
       />
     </PageLayout>
   );

@@ -26,8 +26,8 @@ export default registerAs('app', () => {
       fromAddress: env.SMTP_FROM_ADDRESS,
     },
     vapid: {
-      publicKey:    env.VAPID_PUBLIC_KEY,
-      privateKey:   env.VAPID_PRIVATE_KEY,
+      publicKey: env.VAPID_PUBLIC_KEY,
+      privateKey: env.VAPID_PRIVATE_KEY,
       contactEmail: env.VAPID_CONTACT_EMAIL,
     },
     storage: {

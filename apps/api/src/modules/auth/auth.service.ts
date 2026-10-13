@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
@@ -21,10 +21,14 @@ import { NotificationService } from '../notifications/notification.service';
 import { BanService } from '../users/ban.service';
 import { messages, SETTING_KEYS } from '@ahansk/shared';
 import type {
-  RegisterDto, LoginDto, GoogleAuthDto,
-  ForgotPasswordDto, ResetPasswordDto,
+  RegisterDto,
+  LoginDto,
+  GoogleAuthDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
   AuthUser,
-  RequestEmailChangeDto, VerifyEmailChangeOtpDto,
+  RequestEmailChangeDto,
+  VerifyEmailChangeOtpDto,
 } from '@ahansk/shared';
 
 @Injectable()
@@ -45,12 +49,14 @@ export class AuthService {
     private readonly banService: BanService,
   ) {
     this.googleClientId = config.get<string>('app.google.clientId', '');
-    this.googleClient = this.googleClientId ? new OAuth2Client(this.googleClientId) : null;
+    this.googleClient = this.googleClientId
+      ? new OAuth2Client(this.googleClientId)
+      : null;
   }
 
   // ─── Register ─────────────────────────────────────────────────────────────
 
-  async register(dto: RegisterDto, ip?: string, ua?: string): Promise<{ message: string }> {
+  async register(dto: RegisterDto): Promise<{ message: string }> {
     await this.recaptcha.verify(dto.recaptchaToken);
 
     const authSettings = await this.settingsCache.get(SETTING_KEYS.AUTH);
@@ -62,13 +68,21 @@ export class AuthService {
     if (exists) throw new ConflictException(messages.auth.emailAlreadyExists);
 
     const passwordHash = await argon2.hash(dto.password);
-    const user = await this.repo.createUser({ email: dto.email, password: passwordHash, name: dto.name });
+    const user = await this.repo.createUser({
+      email: dto.email,
+      password: passwordHash,
+      name: dto.name,
+    });
 
     if (authSettings.is_email_verification_required) {
       const token = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await this.repo.createEmailVerificationToken(user.id, tokenHash, expiresAt);
+      await this.repo.createEmailVerificationToken(
+        user.id,
+        tokenHash,
+        expiresAt,
+      );
       await this.email.sendEmailVerification(user.email, user.name, token);
     }
 
@@ -96,7 +110,14 @@ export class AuthService {
     const lockoutMinutes = authSettings.lockout_duration_minutes;
 
     if (!user || !user.is_active) {
-      await this.repo.createUserActivity({ type: 'LOGIN', email: dto.email, success: false, reason: 'user_not_found', ip_address: ip, user_agent: ua });
+      await this.repo.createUserActivity({
+        type: 'LOGIN',
+        email: dto.email,
+        success: false,
+        reason: 'user_not_found',
+        ip_address: ip,
+        user_agent: ua,
+      });
       throw new UnauthorizedException(messages.auth.invalidCredentials);
     }
 
@@ -106,10 +127,15 @@ export class AuthService {
 
     const isBanned = await this.banService.isUserBanned(user.id);
     if (isBanned) {
-      throw new UnauthorizedException('Your account has been banned. Please contact support.');
+      throw new UnauthorizedException(
+        'Your account has been banned. Please contact support.',
+      );
     }
 
-    if (authSettings.is_email_verification_required && !user.email_verified_at) {
+    if (
+      authSettings.is_email_verification_required &&
+      !user.email_verified_at
+    ) {
       throw new UnauthorizedException(messages.auth.emailNotVerified);
     }
 
@@ -120,49 +146,94 @@ export class AuthService {
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) {
       const attempts = user.failed_login_attempts + 1;
-      const locked_until = attempts >= maxAttempts
-        ? new Date(Date.now() + lockoutMinutes * 60 * 1000)
-        : null;
-      await this.repo.updateUser(user.id, { failed_login_attempts: attempts, locked_until: locked_until ?? undefined });
-      await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: dto.email, success: false, reason: 'invalid_password', ip_address: ip, user_agent: ua });
+      const locked_until =
+        attempts >= maxAttempts
+          ? new Date(Date.now() + lockoutMinutes * 60 * 1000)
+          : null;
+      await this.repo.updateUser(user.id, {
+        failed_login_attempts: attempts,
+        locked_until: locked_until ?? undefined,
+      });
+      await this.repo.createUserActivity({
+        user_id: user.id,
+        type: 'LOGIN',
+        email: dto.email,
+        success: false,
+        reason: 'invalid_password',
+        ip_address: ip,
+        user_agent: ua,
+      });
       throw new UnauthorizedException(messages.auth.invalidCredentials);
     }
 
-    await this.repo.updateUser(user.id, { failed_login_attempts: 0, locked_until: null });
+    await this.repo.updateUser(user.id, {
+      failed_login_attempts: 0,
+      locked_until: null,
+    });
 
     if (user.totp_enabled) {
-      const partialToken = this.jwt.sign({ sub: Number(user.id), type: 'partial' }, { expiresIn: '10m', secret: this.config.get('app.jwt.accessSecret') });
+      const partialToken = this.jwt.sign(
+        { sub: Number(user.id), type: 'partial' },
+        { expiresIn: '10m', secret: this.config.get('app.jwt.accessSecret') },
+      );
       return { requiresTwoFactor: true, partialToken };
     }
 
-    await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: dto.email, success: true, ip_address: ip, user_agent: ua });
+    await this.repo.createUserActivity({
+      user_id: user.id,
+      type: 'LOGIN',
+      email: dto.email,
+      success: true,
+      ip_address: ip,
+      user_agent: ua,
+    });
     return this.tokenService.issueTokens(user.id, res, ip, ua);
   }
 
   // ─── Google Auth ──────────────────────────────────────────────────────────
 
-  async googleAuth(dto: GoogleAuthDto, res: Response, ip?: string, ua?: string) {
+  async googleAuth(
+    dto: GoogleAuthDto,
+    res: Response,
+    ip?: string,
+    ua?: string,
+  ) {
     if (!this.googleClient) {
-      throw new ServiceUnavailableException('Google Login is not configured on this server.');
+      throw new ServiceUnavailableException(
+        'Google Login is not configured on this server.',
+      );
     }
-    const ticket = await this.googleClient.verifyIdToken({ idToken: dto.credential, audience: this.googleClientId }).catch(() => { throw new UnauthorizedException(messages.auth.googleTokenInvalid); });
+    const ticket = await this.googleClient
+      .verifyIdToken({ idToken: dto.credential, audience: this.googleClientId })
+      .catch(() => {
+        throw new UnauthorizedException(messages.auth.googleTokenInvalid);
+      });
     const payload = ticket.getPayload();
-    if (!payload?.sub || !payload.email) throw new UnauthorizedException(messages.auth.googleTokenInvalid);
+    if (!payload?.sub || !payload.email)
+      throw new UnauthorizedException(messages.auth.googleTokenInvalid);
 
     const authSettings = await this.settingsCache.get(SETTING_KEYS.AUTH);
     if (!authSettings.is_google_auth_enabled) {
       throw new BadRequestException(messages.auth.googleAuthDisabled);
     }
 
-    const oauthAccount = await this.repo.findOAuthAccount('google', payload.sub);
-    let user = oauthAccount ? await this.repo.findUserById(oauthAccount.user_id) : null;
+    const oauthAccount = await this.repo.findOAuthAccount(
+      'google',
+      payload.sub,
+    );
+    let user = oauthAccount
+      ? await this.repo.findUserById(oauthAccount.user_id)
+      : null;
 
     if (!user) {
       user = await this.repo.findUserByEmail(payload.email);
       if (user) {
         await this.repo.createOAuthAccount(user.id, 'google', payload.sub);
       } else {
-        if (!authSettings.is_registration_enabled && !authSettings.is_google_auth_only) {
+        if (
+          !authSettings.is_registration_enabled &&
+          !authSettings.is_google_auth_only
+        ) {
           throw new BadRequestException(messages.auth.registrationDisabled);
         }
         user = await this.repo.createUser({
@@ -181,7 +252,9 @@ export class AuthService {
 
     const isBanned = await this.banService.isUserBanned(user.id);
     if (isBanned) {
-      throw new UnauthorizedException('Your account has been banned. Please contact support.');
+      throw new UnauthorizedException(
+        'Your account has been banned. Please contact support.',
+      );
     }
 
     if (!user.email_verified_at) {
@@ -196,17 +269,28 @@ export class AuthService {
       return { requiresTwoFactor: true, partialToken };
     }
 
-    await this.repo.createUserActivity({ user_id: user.id, type: 'LOGIN', email: user.email, success: true, ip_address: ip, user_agent: ua });
+    await this.repo.createUserActivity({
+      user_id: user.id,
+      type: 'LOGIN',
+      email: user.email,
+      success: true,
+      ip_address: ip,
+      user_agent: ua,
+    });
     return this.tokenService.issueTokens(user.id, res, ip, ua);
   }
 
   // ─── Token Delegation ─────────────────────────────────────────────────────
 
-  async refresh(rawToken: string, res: Response, ip?: string, ua?: string) {
-    return this.tokenService.refresh(rawToken, res, ip, ua);
+  async refresh(rawToken: string, res: Response) {
+    return this.tokenService.refresh(rawToken, res);
   }
 
-  async refreshSilently(rawToken: string, req: any, res: Response): Promise<AuthUser | null> {
+  async refreshSilently(
+    rawToken: string,
+    req: Request,
+    res: Response,
+  ): Promise<AuthUser | null> {
     return this.tokenService.refreshSilently(rawToken, req, res);
   }
 
@@ -223,9 +307,12 @@ export class AuthService {
   async verifyEmail(rawToken: string): Promise<{ message: string }> {
     const hash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const record = await this.repo.findEmailVerificationToken(hash);
-    if (!record || record.used_at || record.expires_at < new Date()) throw new BadRequestException(messages.auth.invalidToken);
+    if (!record || record.used_at || record.expires_at < new Date())
+      throw new BadRequestException(messages.auth.invalidToken);
     await this.repo.consumeEmailVerificationToken(record.id);
-    await this.repo.updateUser(record.user_id, { email_verified_at: new Date() });
+    await this.repo.updateUser(record.user_id, {
+      email_verified_at: new Date(),
+    });
     return { message: messages.auth.emailVerified };
   }
 
@@ -257,7 +344,8 @@ export class AuthService {
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
     const hash = crypto.createHash('sha256').update(dto.token).digest('hex');
     const record = await this.repo.findPasswordResetToken(hash);
-    if (!record || record.used_at || record.expires_at < new Date()) throw new BadRequestException(messages.auth.invalidToken);
+    if (!record || record.used_at || record.expires_at < new Date())
+      throw new BadRequestException(messages.auth.invalidToken);
     const passwordHash = await argon2.hash(dto.password);
     await this.repo.consumePasswordResetToken(record.id);
     await this.repo.updateUser(record.user_id, { password: passwordHash });
@@ -266,7 +354,8 @@ export class AuthService {
       type: 'account.password_changed',
       userId: Number(record.user_id),
       title: 'Password Changed',
-      message: 'Your account password has been changed. If you did not do this, please contact support immediately.',
+      message:
+        'Your account password has been changed. If you did not do this, please contact support immediately.',
     });
     return { message: messages.auth.passwordResetSuccess };
   }

@@ -1,4 +1,15 @@
-import { Controller, Post, Get, Body, Query, Req, Res, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Query,
+  Req,
+  Res,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -6,14 +17,19 @@ import { AuthTotpService } from './auth-totp.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-
 import { messages } from '@ahansk/shared';
 import type { AuthUser } from '@ahansk/shared';
 import {
-  RegisterDto, LoginDto, GoogleAuthDto,
-  ForgotPasswordDto, ResetPasswordDto,
-  EnableTotpDto, DisableTotpDto, VerifyTotpDto,
-  RequestEmailChangeDto, VerifyEmailChangeOtpDto,
+  RegisterDto,
+  LoginDto,
+  GoogleAuthDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  EnableTotpDto,
+  DisableTotpDto,
+  VerifyTotpDto,
+  RequestEmailChangeDto,
+  VerifyEmailChangeOtpDto,
 } from './auth.dto';
 
 @Controller('auth')
@@ -27,11 +43,8 @@ export class AuthController {
   @Post('register')
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async register(
-    @Body() dto: RegisterDto,
-    @Req() req: Request,
-  ) {
-    return this.authService.register(dto, req.ip, req.headers['user-agent']);
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   @Public()
@@ -55,7 +68,12 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.googleAuth(dto, res, req.ip, req.headers['user-agent']);
+    return this.authService.googleAuth(
+      dto,
+      res,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   @Public()
@@ -68,15 +86,23 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.totpService.verifyTotpLogin(dto, res, req.ip, req.headers['user-agent']);
+    return this.totpService.verifyTotpLogin(
+      dto,
+      res,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const rawToken = req.cookies?.refresh_token as string | undefined;
-    return this.authService.refresh(rawToken ?? '', res, req.ip, req.headers['user-agent']);
+    return this.authService.refresh(rawToken ?? '', res);
   }
 
   @Post('logout')
@@ -114,10 +140,7 @@ export class AuthController {
   }
 
   @Post('2fa/enable')
-  async enableTotp(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: EnableTotpDto,
-  ) {
+  async enableTotp(@CurrentUser() user: AuthUser, @Body() dto: EnableTotpDto) {
     return this.totpService.enableTotp(user.id, dto);
   }
 

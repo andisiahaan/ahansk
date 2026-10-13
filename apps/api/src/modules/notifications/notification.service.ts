@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import {
   type NotificationType,
+  type NotificationCategory,
+  type NotificationItem,
   type NotificationPreferences,
   type PushSubscriptionPayload,
   getNotificationCategory,
@@ -16,19 +18,19 @@ import { NotificationRepository } from './notification.repository';
 import { buildPaginationMeta } from '@ahansk/shared';
 
 interface SendInput {
-  type:    NotificationType;
-  userId:  number | bigint;
-  title:   string;
+  type: NotificationType;
+  userId: number | bigint;
+  title: string;
   message: string;
-  data?:   Record<string, unknown>;
+  data?: Record<string, unknown>;
 }
 
 interface ChannelJob {
   userId: number | bigint;
-  title:  string;
+  title: string;
   message: string;
-  data?:  Record<string, unknown>;
-  url?:   string;
+  data?: Record<string, unknown>;
+  url?: string;
 }
 
 @Injectable()
@@ -37,7 +39,9 @@ export class NotificationService {
     private readonly repo: NotificationRepository,
     private readonly config: ConfigService,
     @InjectQueue('notification-email') private readonly emailQueue: Queue,
-    @InjectQueue('notification-push')  private readonly pushQueue:  Queue,
+    @InjectQueue('notification-push') private readonly pushQueue: Queue,
+    @InjectQueue('notification-broadcast')
+    private readonly broadcastQueue: Queue,
   ) {}
 
   // ─── Core Send ─────────────────────────────────────────────────────────────
@@ -47,65 +51,124 @@ export class NotificationService {
 
     // 1. Selalu simpan ke database
     await this.repo.create({
-      user:     { connect: { id: BigInt(input.userId) } },
-      type:     input.type,
+      user: { connect: { id: BigInt(input.userId) } },
+      type: input.type,
       category,
-      title:    input.title,
-      message:  input.message,
-      data:     input.data !== undefined ? (input.data as Prisma.InputJsonValue) : Prisma.DbNull,
+      title: input.title,
+      message: input.message,
+      data:
+        input.data !== undefined
+          ? (input.data as Prisma.InputJsonValue)
+          : Prisma.DbNull,
     });
 
     // 2. Resolve channels aktif untuk user ini
     const channels = await this.resolveChannels(input.userId, input.type);
     const pushJob: ChannelJob = {
-      userId:  input.userId,
-      title:   input.title,
+      userId: input.userId,
+      title: input.title,
       message: input.message,
-      data:    input.data,
-      url:     input.data?.url as string | undefined,
+      data: input.data,
+      url: input.data?.url as string | undefined,
     };
 
     if (channels.includes('email')) {
       const user = await this.repo.findUserForNotification(input.userId);
       if (user) {
-        await this.emailQueue.add('send', {
-          ...pushJob,
-          type: input.type,
-          to:   user.email,
-          name: user.name,
-        }, { attempts: 3, backoff: { type: 'exponential', delay: 5000 } });
+        await this.emailQueue.add(
+          'send',
+          {
+            ...pushJob,
+            type: input.type,
+            to: user.email,
+            name: user.name,
+          },
+          { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+        );
       }
     }
     if (channels.includes('push')) {
-      await this.pushQueue.add('send', pushJob, { attempts: 3, backoff: { type: 'exponential', delay: 3000 } });
+      await this.pushQueue.add('send', pushJob, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 3000 },
+      });
     }
   }
 
-  async sendToAdmins(type: NotificationType, title: string, message: string, data?: Record<string, unknown>): Promise<void> {
+  async sendToAdmins(
+    type: NotificationType,
+    title: string,
+    message: string,
+    data?: Record<string, unknown>,
+  ): Promise<void> {
     const admins = await this.repo.getAllAdminUsers();
     for (const a of admins) {
       await this.send({ type, userId: Number(a.id), title, message, data });
     }
   }
 
-  async sendToAllUsers(type: NotificationType, title: string, message: string, data?: Record<string, unknown>): Promise<void> {
-    const userIds = await this.repo.getAllActiveUserIds();
-    for (const userId of userIds) {
-      await this.send({ type, userId, title, message, data });
-    }
+  async sendToAllUsers(
+    type: NotificationType,
+    title: string,
+    message: string,
+    data?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.broadcastQueue.add('broadcast-all', {
+      type,
+      title,
+      message,
+      data,
+    });
   }
 
-  async sendBroadcast(type: NotificationType, title: string, message: string, userIds: (number | bigint)[], data?: Record<string, unknown>): Promise<void> {
-    for (const userId of userIds) {
-      await this.send({ type, userId, title, message, data });
-    }
+  async sendBroadcast(
+    type: NotificationType,
+    title: string,
+    message: string,
+    userIds: (number | bigint)[],
+    data?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.broadcastQueue.add('broadcast-users', {
+      type,
+      title,
+      message,
+      userIds: userIds.map(Number),
+      data,
+    });
   }
 
   // ─── Query Methods ─────────────────────────────────────────────────────────
 
-  async getForUser(userId: number | bigint, filter: { page?: number; limit?: number; category?: string; isRead?: boolean }) {
+  async getForUser(
+    userId: number | bigint,
+    filter: {
+      page?: number;
+      limit?: number;
+      category?: string;
+      isRead?: boolean;
+    },
+  ) {
     const result = await this.repo.findForUser(userId, filter);
-    return { items: result.items, meta: buildPaginationMeta(result.total, result.page, result.limit) };
+    const items: (NotificationItem & {
+      is_read: boolean;
+      created_at: string;
+    })[] = result.items.map((n) => ({
+      id: Number(n.id),
+      type: n.type as NotificationType,
+      category: n.category as NotificationCategory,
+      title: n.title,
+      message: n.message,
+      data: (n.data as Record<string, unknown>) ?? null,
+      isRead: n.is_read,
+      readAt: n.read_at?.toISOString() ?? null,
+      createdAt: n.created_at.toISOString(),
+      is_read: n.is_read,
+      created_at: n.created_at.toISOString(),
+    }));
+    return {
+      items,
+      meta: buildPaginationMeta(result.total, result.page, result.limit),
+    };
   }
 
   async getUnreadCount(userId: number | bigint): Promise<number> {
@@ -122,29 +185,49 @@ export class NotificationService {
 
   async getAllAdmin(page: number, limit: number) {
     const result = await this.repo.findAllAdmin(page, limit);
-    return { items: result.items, meta: buildPaginationMeta(result.total, result.page, result.limit) };
+    return {
+      items: result.items,
+      meta: buildPaginationMeta(result.total, result.page, result.limit),
+    };
   }
 
   // ─── Preferences ────────────────────────────────────────────────────────────
 
-  async getPreferences(userId: number | bigint): Promise<NotificationPreferences> {
+  async getPreferences(
+    userId: number | bigint,
+  ): Promise<NotificationPreferences> {
     const raw = await this.repo.getUserPreferences(userId);
     return {
       channels: (raw.channels as NotificationPreferences['channels']) ?? {},
     };
   }
 
-  async savePreferences(userId: number | bigint, prefs: NotificationPreferences): Promise<void> {
+  async savePreferences(
+    userId: number | bigint,
+    prefs: NotificationPreferences,
+  ): Promise<void> {
     await this.repo.saveUserPreferences(userId, { channels: prefs.channels });
   }
 
   // ─── Push Subscription ────────────────────────────────────────────────────
 
-  async subscribePush(userId: number | bigint, sub: PushSubscriptionPayload): Promise<void> {
-    await this.repo.upsertPushSubscription(userId, sub.endpoint, sub.p256dh, sub.auth, sub.userAgent);
+  async subscribePush(
+    userId: number | bigint,
+    sub: PushSubscriptionPayload,
+  ): Promise<void> {
+    await this.repo.upsertPushSubscription(
+      userId,
+      sub.endpoint,
+      sub.p256dh,
+      sub.auth,
+      sub.userAgent,
+    );
   }
 
-  async unsubscribePush(userId: number | bigint, endpoint: string): Promise<void> {
+  async unsubscribePush(
+    userId: number | bigint,
+    endpoint: string,
+  ): Promise<void> {
     await this.repo.deletePushSubscription(userId, endpoint);
   }
 
@@ -152,15 +235,21 @@ export class NotificationService {
     return this.repo.getPushSubscriptions(userId);
   }
 
-  async deletePushSubscriptionById(userId: number | bigint, id: number | bigint): Promise<void> {
+  async deletePushSubscriptionById(
+    userId: number | bigint,
+    id: number | bigint,
+  ): Promise<void> {
     await this.repo.deletePushSubscriptionById(userId, id);
   }
 
   // ─── Private: Channel Resolution ──────────────────────────────────────────
 
-  private async resolveChannels(userId: number | bigint, type: NotificationType): Promise<string[]> {
+  private async resolveChannels(
+    userId: number | bigint,
+    type: NotificationType,
+  ): Promise<string[]> {
     const active: string[] = [];
-    const prefs  = await this.getPreferences(userId);
+    const prefs = await this.getPreferences(userId);
 
     for (const ch of NOTIFICATION_CHANNELS) {
       if (REQUIRED_CHANNELS.includes(ch)) continue; // database sudah ditangani di atas

@@ -16,10 +16,7 @@ export class SettingsAdminController {
   }
 
   @Patch(':key')
-  async update(
-    @Param('key') key: string,
-    @Body() dto: UpdateSettingDto,
-  ) {
+  async update(@Param('key') key: string, @Body() dto: UpdateSettingDto) {
     const data = await this.settingsService.update(key, dto);
     return { success: true, message: messages.settings.updated, data };
   }

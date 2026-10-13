@@ -31,7 +31,8 @@ describe('StorageService', () => {
 
     mockConfigService = {
       get: jest.fn((key: string, defaultVal?: unknown) => {
-        if (key === 'app.storage.local.publicUrl') return 'http://ahansk.test/storage';
+        if (key === 'app.storage.local.publicUrl')
+          return 'http://ahansk.test/storage';
         if (key === 'app.storage.s3.publicUrl') return 'https://s3.mycdn.com';
         if (key === 'app.storage.s3.endpoint') return 'https://s3.endpoint.com';
         if (key === 'app.storage.s3.bucket') return 'my-bucket';

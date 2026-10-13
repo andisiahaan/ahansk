@@ -1,5 +1,15 @@
 import {
-  Controller, Get, Patch, Delete, Post, Body, Param, Query, HttpCode, HttpStatus, ParseIntPipe,
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Post,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -21,10 +31,10 @@ export class NotificationController {
     @Query() query: ListNotificationQueryDto,
   ) {
     const filter = {
-      page:     query.page  || 1,
-      limit:    query.limit || 20,
+      page: query.page || 1,
+      limit: query.limit || 20,
       category: query.category,
-      isRead:   query.isRead,
+      isRead: query.isRead,
     };
     return this.svc.getForUser(user.id, filter);
   }
@@ -36,7 +46,10 @@ export class NotificationController {
 
   @Patch(':id/read')
   @HttpCode(HttpStatus.OK)
-  async markRead(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
+  async markRead(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
     await this.svc.markRead(id, user.id);
     return { message: 'Marked as read' };
   }
@@ -59,7 +72,7 @@ export class NotificationController {
     @CurrentUser() user: AuthUser,
     @Body() dto: NotificationPreferencesDto,
   ) {
-    await this.svc.savePreferences(user.id, dto as unknown as import('@ahansk/shared').NotificationPreferences);
+    await this.svc.savePreferences(user.id, dto);
     return { message: 'Preferences saved' };
   }
 
@@ -80,7 +93,10 @@ export class NotificationController {
 
   @Delete('push/subscriptions/:id')
   @HttpCode(HttpStatus.OK)
-  async deleteSubscription(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
+  async deleteSubscription(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
     await this.svc.deletePushSubscriptionById(user.id, id);
     return { message: 'Unsubscribed' };
   }

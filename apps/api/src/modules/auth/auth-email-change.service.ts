@@ -7,7 +7,10 @@ import * as argon2 from 'argon2';
 import { AuthRepository } from './auth.repository';
 import { NotificationService } from '../notifications/notification.service';
 import { OtpService } from '../otp/otp.service';
-import type { RequestEmailChangeDto, VerifyEmailChangeOtpDto } from '@ahansk/shared';
+import type {
+  RequestEmailChangeDto,
+  VerifyEmailChangeOtpDto,
+} from '@ahansk/shared';
 
 @Injectable()
 export class AuthEmailChangeService {
@@ -17,9 +20,13 @@ export class AuthEmailChangeService {
     private readonly notifications: NotificationService,
   ) {}
 
-  async requestEmailChange(userId: number, dto: RequestEmailChangeDto): Promise<{ message: string }> {
+  async requestEmailChange(
+    userId: number,
+    dto: RequestEmailChangeDto,
+  ): Promise<{ message: string }> {
     const user = await this.repo.findUserById(userId);
-    if (!user || !user.password) throw new BadRequestException('User not found or no password set.');
+    if (!user || !user.password)
+      throw new BadRequestException('User not found or no password set.');
 
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) throw new BadRequestException('Invalid password.');
@@ -36,7 +43,9 @@ export class AuthEmailChangeService {
     });
 
     if (!result.sent) {
-      throw new BadRequestException(`Please wait ${result.cooldownSeconds} seconds before requesting a new OTP.`);
+      throw new BadRequestException(
+        `Please wait ${result.cooldownSeconds} seconds before requesting a new OTP.`,
+      );
     }
 
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -45,14 +54,22 @@ export class AuthEmailChangeService {
     return { message: 'OTP sent to your new email.' };
   }
 
-  async verifyEmailChange(userId: number, dto: VerifyEmailChangeOtpDto): Promise<{ message: string }> {
+  async verifyEmailChange(
+    userId: number,
+    dto: VerifyEmailChangeOtpDto,
+  ): Promise<{ message: string }> {
     const user = await this.repo.findUserById(userId);
-    if (!user || !user.password) throw new BadRequestException('User not found or no password set.');
+    if (!user || !user.password)
+      throw new BadRequestException('User not found or no password set.');
 
     const validPwd = await argon2.verify(user.password, dto.password);
     if (!validPwd) throw new BadRequestException('Invalid password.');
 
-    const validOtp = await this.otp.verifyOtp({ userId, purpose: 'email_change', code: dto.otp });
+    const validOtp = await this.otp.verifyOtp({
+      userId,
+      purpose: 'email_change',
+      code: dto.otp,
+    });
     if (!validOtp) throw new BadRequestException('Invalid or expired OTP.');
 
     const pending = await this.repo.findPendingEmailChangeByUserId(userId);
