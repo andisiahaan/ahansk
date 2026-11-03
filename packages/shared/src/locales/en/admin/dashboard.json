@@ -1,11 +1,47 @@
 {
   "title": "Dashboard",
+  "subtitle": "Welcome back to your administration command center.",
+  "greetingMorning": "Good morning",
+  "greetingAfternoon": "Good afternoon",
+  "greetingEvening": "Good evening",
   "stats": {
     "totalUsers": "Total Users",
+    "totalUsersDesc": "Registered system accounts",
     "newToday": "New Today",
-    "totalNews": "Total News",
+    "totalNews": "Announcements",
+    "totalNewsDesc": "Published articles & alerts",
     "totalPages": "Total Pages",
-    "apiStatus": "API Status"
+    "apiStatus": "API Gateway",
+    "apiStatusDesc": "Core services operating normally",
+    "systemHealth": "System Health",
+    "allHealthy": "All systems operational"
+  },
+  "recentUsers": {
+    "title": "Recent Users",
+    "subtitle": "Latest user registrations",
+    "viewAll": "View all users",
+    "empty": "No users found"
+  },
+  "recentNews": {
+    "title": "Recent Announcements",
+    "subtitle": "Latest news and updates",
+    "viewAll": "Manage news",
+    "empty": "No announcements found"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "subtitle": "Frequently used administrative shortcuts",
+    "addUser": "Add User",
+    "createNews": "Create Announcement",
+    "sendBroadcast": "Send Broadcast",
+    "systemSettings": "System Settings"
+  },
+  "systemMetrics": {
+    "title": "Environment & Services",
+    "database": "Primary Database",
+    "cache": "Redis Cache DB1",
+    "queue": "BullMQ Worker DB0",
+    "statusConnected": "Connected & Healthy"
   },
   "recentActivity": "Recent Activity",
   "quickLinks": {

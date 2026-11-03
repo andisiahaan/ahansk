@@ -8,7 +8,7 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   isPending?: boolean;
@@ -28,13 +28,13 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} className="max-w-sm">
-      <p className="text-sm text-muted-foreground mb-6">{description}</p>
-      <div className="flex justify-end gap-2">
+      {description && <p className="text-sm text-muted-foreground mb-6">{description}</p>}
+      <div className="flex justify-end gap-2.5 pt-2">
         <Button variant="outline" type="button" onClick={onClose} disabled={isPending}>
           {cancelLabel}
         </Button>
-        <Button variant={variant} onClick={onConfirm} disabled={isPending}>
-          {isPending ? '...' : confirmLabel}
+        <Button variant={variant} onClick={onConfirm} disabled={isPending} loading={isPending}>
+          {confirmLabel}
         </Button>
       </div>
     </Modal>

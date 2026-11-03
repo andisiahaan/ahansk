@@ -1,9 +1,12 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
+import { ArrowLeft, Save, Pin, Globe, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { RichEditor } from '@/components/rich-editor';
 import { PageLayout, PageHeader } from '@/components/ui/page-layout';
 
@@ -28,6 +31,8 @@ interface NewsFormProps {
 }
 
 export function NewsForm({ isNew, form, saving, onCancel, onSave, setForm }: NewsFormProps) {
+  const t = useTranslations('news');
+
   const f = (k: keyof NewsFormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((p) => ({ ...p, [k]: e.target.value }));
 
@@ -43,75 +48,151 @@ export function NewsForm({ isNew, form, saving, onCancel, onSave, setForm }: New
   return (
     <PageLayout>
       <PageHeader
-        title={isNew ? 'New News Item' : 'Edit News Item'}
+        title={isNew ? t('create.title') : t('edit.title')}
         action={
-          <Button variant="outline" size="sm" onClick={onCancel}>
-            ← Back
+          <Button variant="outline" size="sm" onClick={onCancel} className="gap-1.5 text-xs">
+            <ArrowLeft className="size-3.5" />
+            <span>{t('actions.cancel')}</span>
           </Button>
         }
       />
-      <div className="max-w-3xl flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label>Title</Label>
-            <Input value={form.title} onChange={handleTitleChange} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Main Content Area (2 cols) */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="title" className="text-sm font-bold text-foreground">
+                {t('fields.title')}
+              </Label>
+              <Input
+                id="title"
+                value={form.title}
+                onChange={handleTitleChange}
+                placeholder="Announcement Headline"
+                className="text-base font-semibold h-11"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="slug" className="text-xs text-muted-foreground">
+                {t('fields.slug')}
+              </Label>
+              <Input
+                id="slug"
+                value={form.slug}
+                onChange={f('slug')}
+                placeholder="announcement-headline"
+                className="text-xs font-mono text-muted-foreground"
+              />
+            </div>
+
+            <div className="space-y-1.5 pt-2">
+              <Label className="text-sm font-bold text-foreground">
+                {t('fields.content')}
+              </Label>
+              <RichEditor
+                content={form.content}
+                onChange={(html) => setForm((p) => ({ ...p, content: html }))}
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Slug</Label>
-            <Input value={form.slug} onChange={f('slug')} />
+        </div>
+
+        {/* Right Sidebar: Publishing Settings (1 col) */}
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs space-y-5">
+            <h3 className="text-sm font-bold text-foreground pb-2 border-b border-border/60">
+              Publishing Controls
+            </h3>
+
+            {/* Category / Type */}
+            <div className="space-y-1.5">
+              <Label htmlFor="type">{t('fields.type')}</Label>
+              <select
+                id="type"
+                value={form.type}
+                onChange={f('type')}
+                className="w-full h-10 px-3 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+              >
+                <option value="ANNOUNCEMENT">Announcement</option>
+                <option value="UPDATE">Product Update</option>
+                <option value="MAINTENANCE">Maintenance Alert</option>
+              </select>
+            </div>
+
+            {/* Status Switches */}
+            <div className="space-y-3 pt-2 border-t border-border/60">
+              <div className="flex items-center justify-between p-3 rounded-2xl border border-border/60 bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <Globe className="size-4 text-primary" />
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{t('fields.published')}</p>
+                    <p className="text-[0.68rem] text-muted-foreground">Visible to users</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={form.is_published}
+                  onChange={(e) => setForm((p) => ({ ...p, is_published: e.target.checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-2xl border border-border/60 bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <Pin className="size-4 text-amber-500" />
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{t('fields.pinned')}</p>
+                    <p className="text-[0.68rem] text-muted-foreground">Keep at top of list</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={form.is_pinned}
+                  onChange={(e) => setForm((p) => ({ ...p, is_pinned: e.target.checked }))}
+                />
+              </div>
+            </div>
+
+            {/* Schedule & Expiration */}
+            <div className="space-y-3 pt-2 border-t border-border/60">
+              <div className="space-y-1.5">
+                <Label htmlFor="published_at" className="flex items-center gap-1.5 text-xs">
+                  <Calendar className="size-3.5 text-muted-foreground" />
+                  <span>{t('fields.publishDate')}</span>
+                </Label>
+                <Input
+                  id="published_at"
+                  type="datetime-local"
+                  value={form.published_at}
+                  onChange={f('published_at')}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="expires_at" className="flex items-center gap-1.5 text-xs">
+                  <Clock className="size-3.5 text-muted-foreground" />
+                  <span>{t('fields.expiresAt')}</span>
+                </Label>
+                <Input
+                  id="expires_at"
+                  type="datetime-local"
+                  value={form.expires_at}
+                  onChange={f('expires_at')}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-3 border-t border-border/60 space-y-2">
+              <Button onClick={onSave} loading={saving} className="w-full gap-2 shadow-xs">
+                <Save className="size-4" />
+                <span>{t('actions.save')}</span>
+              </Button>
+              <Button variant="outline" onClick={onCancel} className="w-full text-xs">
+                {t('actions.cancel')}
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Type</Label>
-          <select
-            value={form.type}
-            onChange={f('type')}
-            className="h-9 rounded-lg border border-border bg-card px-3 text-sm text-foreground"
-          >
-            {['ANNOUNCEMENT', 'UPDATE', 'MAINTENANCE'].map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Content</Label>
-          <RichEditor content={form.content} onChange={(html) => setForm((p) => ({ ...p, content: html }))} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label>Publish At</Label>
-            <Input type="datetime-local" value={form.published_at} onChange={f('published_at')} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Expires At</Label>
-            <Input type="datetime-local" value={form.expires_at} onChange={f('expires_at')} />
-          </div>
-        </div>
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              className="accent-primary"
-              checked={form.is_published}
-              onChange={(e) => setForm((p) => ({ ...p, is_published: e.target.checked }))}
-            />{' '}
-            Published
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              className="accent-primary"
-              checked={form.is_pinned}
-              onChange={(e) => setForm((p) => ({ ...p, is_pinned: e.target.checked }))}
-            />{' '}
-            Pinned
-          </label>
-        </div>
-        <Button onClick={onSave} loading={saving} className="w-fit">
-          Save
-        </Button>
       </div>
     </PageLayout>
   );

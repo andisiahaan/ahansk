@@ -1,16 +1,40 @@
 {
-  "title": "Settings",
+  "title": "System Settings",
+  "subtitle": "Configure global environment options, security governance, and tracking scripts.",
   "tabs": {
-    "app": "General",
-    "auth": "Auth",
-    "custom_tags": "Custom Tags"
+    "app": "General Information",
+    "appDesc": "Basic branding, metadata, and application identity",
+    "auth": "Authentication & Security",
+    "authDesc": "Login policies, password strength, and 2FA rules",
+    "custom_tags": "Custom Head & Body Tags",
+    "customTagsDesc": "Third-party analytics, tracking pixels, and meta tags"
+  },
+  "app": {
+    "title": "Platform Identity",
+    "desc": "Manage the global site name, default meta tags, and SEO settings.",
+    "name": "Application Name",
+    "namePlaceholder": "ahansk Enterprise",
+    "tagline": "Brand Tagline",
+    "taglinePlaceholder": "High performance full-stack application",
+    "description": "Platform Summary",
+    "descriptionPlaceholder": "A brief overview of this web application...",
+    "metaDescription": "Global Meta Description (SEO)",
+    "metaKeywords": "Meta Keywords (Comma separated)"
+  },
+  "customTags": {
+    "title": "Script & Meta Tag Injections",
+    "desc": "Safely inject scripts or tracking pixels (e.g. Google Tag Manager, Meta Pixel) into template hooks.",
+    "headTop": "Head Top (Immediate child of <head>)",
+    "headBottom": "Head Bottom (Before closing </head>)",
+    "bodyTop": "Body Top (Immediate child of <body>)",
+    "bodyBottom": "Body Bottom (Before closing </body>)"
   },
   "auth": {
     "googleAuthOnly": {
-      "title": "Google Authentication Mode",
-      "label": "Is google auth only",
-      "description": "If enabled, standard registration and email/password login will be disabled on the frontend. Users will only be able to authenticate using Google Login.",
-      "activeNotice": "Google Auth Only is active. Standard registration, password login, and password policy settings are hidden and disabled on the frontend."
+      "title": "Exclusive Google Authentication",
+      "label": "Enforce Google Login Only",
+      "description": "Disable password login and public email registration completely. All users must authenticate via Google Workspace / OAuth.",
+      "activeNotice": "Google Auth Only is currently active. Conventional email/password logins and related password complexity policies are disabled on the frontend."
     },
     "standard": {
       "title": "Standard Authentication & Registration",
@@ -54,5 +78,5 @@
     }
   },
   "sections": { "general": "General", "auth": "Authentication", "email": "Email", "storage": "Storage" },
-  "actions": { "save": "Save Changes", "saving": "Saving...", "saved": "Settings saved." }
+  "actions": { "save": "Save Changes", "saving": "Saving...", "saved": "Settings saved successfully." }
 }

@@ -1,6 +1,64 @@
 {
-  "list": { "title": "News & Announcements", "subtitle": "Manage news and announcements." },
-  "create": { "title": "New Item", "submit": "Publish" },
-  "edit": { "title": "Edit Item" },
-  "fields": { "title": "Title", "type": "Type", "published": "Published", "pinned": "Pinned", "expiresAt": "Expires at" }
+  "list": {
+    "title": "News & Announcements",
+    "subtitle": "Publish system-wide updates, notices, and scheduled maintenance alerts.",
+    "total": "announcements"
+  },
+  "create": {
+    "title": "Create Announcement",
+    "submit": "Publish Announcement",
+    "back": "Back to list"
+  },
+  "edit": {
+    "title": "Edit Announcement",
+    "submit": "Update Announcement",
+    "back": "Back to list"
+  },
+  "filters": {
+    "searchPlaceholder": "Search by title or slug...",
+    "allTypes": "All Types",
+    "allStatuses": "All Statuses",
+    "published": "Published",
+    "draft": "Draft",
+    "sortByPublish": "Publish Date",
+    "sortByTitle": "Title",
+    "descending": "Newest First",
+    "ascending": "Oldest First"
+  },
+  "fields": {
+    "title": "Title",
+    "slug": "Slug",
+    "type": "Type",
+    "content": "Content",
+    "status": "Status",
+    "published": "Published",
+    "pinned": "Pinned",
+    "publishDate": "Publish Date",
+    "expiresAt": "Expires At",
+    "actions": "Actions",
+    "pinnedLabel": "Pin to top of news feed",
+    "publishedLabel": "Publish immediately"
+  },
+  "types": {
+    "ANNOUNCEMENT": "Announcement",
+    "UPDATE": "Product Update",
+    "MAINTENANCE": "Maintenance Alert"
+  },
+  "actions": {
+    "create": "New Item",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel"
+  },
+  "messages": {
+    "confirmDelete": "Are you sure you want to delete this announcement? This action cannot be undone.",
+    "saved": "Announcement saved successfully.",
+    "deleted": "Announcement deleted successfully.",
+    "loadFailed": "Failed to load announcement.",
+    "saveFailed": "Failed to save announcement.",
+    "deleteFailed": "Failed to delete announcement.",
+    "empty": "No announcements found matching your criteria."
+  }
 }

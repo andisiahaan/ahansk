@@ -1,15 +1,28 @@
 'use client';
+
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-
+import { useTranslations } from 'next-intl';
+import {
+  ArrowLeft,
+  Trash2,
+  ShieldCheck,
+  UserCheck,
+  UserX,
+  AlertTriangle,
+  KeyRound,
+  ShieldAlert,
+  Calendar,
+  Save,
+} from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { UserSessionsPanel } from './user-sessions-panel';
-import { Trash2 } from 'lucide-react';
 
 interface UserDetail {
   id: string | number;
@@ -29,13 +42,11 @@ interface UserDetail {
   }>;
 }
 
-import { useTranslations } from 'next-intl';
-
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const t = useTranslations('users');
-  
+
   const { data: user, isLoading: loading, refetch: fetchUser } = useQuery({
     queryKey: ['admin-user', id],
     queryFn: async () => {
@@ -50,7 +61,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     },
   });
 
-  // Edit states with fallback to loaded user
   const [draftName, setDraftName] = useState<string | null>(null);
   const [draftEmail, setDraftEmail] = useState<string | null>(null);
   const [draftRole, setDraftRole] = useState<string | null>(null);
@@ -79,7 +89,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       };
       if (editPassword) payload['password'] = editPassword;
       await api.patch(`/admin/users/${id}`, payload);
-      toast.success(t('messages.updated') || 'User updated successfully');
+      toast.success(t('messages.updated'));
       setEditPassword('');
       setDraftName(null);
       setDraftEmail(null);
@@ -108,7 +118,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       await fetchUser();
     } catch (err: unknown) {
       toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('messages.banFailed'));
-
     } finally {
       setIsBanning(false);
     }
@@ -126,124 +135,225 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Permanently delete user "${user?.name}"? This action cannot be undone.`)) return;
+    if (!confirm(t('details.confirmDelete'))) return;
     try {
       await api.delete(`/admin/users/${id}`);
-      toast.success('User deleted.');
+      toast.success(t('messages.deleted'));
       router.push('/users');
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to delete user.');
+      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('messages.deleteFailed'));
     }
   };
 
-  if (loading) return <div className="animate-pulse text-muted-foreground">Loading user details...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6 space-y-4">
+        <div className="h-28 rounded-3xl bg-muted/40 animate-pulse" />
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="h-64 rounded-3xl bg-muted/40 animate-pulse" />
+          <div className="h-64 rounded-3xl bg-muted/40 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return null;
 
-  // Ideally, the backend includes bans in the user fetch. Let's check if there's any active ban.
   const activeBan = user.bans?.find((b) => !b.unbanned_at && (!b.expires_at || new Date(b.expires_at) > new Date()));
+  const initials = user.name.slice(0, 2).toUpperCase();
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto w-full">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => router.push('/users')}>
-            ← {t('details.back')}
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Top Navigation & Profile Hero Card */}
+      <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/users')}
+            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            <span>{t('details.back')}</span>
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">{t('details.title')}</h1>
+
+          <Button variant="destructive" size="sm" onClick={handleDelete} className="gap-1.5 text-xs">
+            <Trash2 className="size-3.5" />
+            <span>{t('details.deleteAccount')}</span>
+          </Button>
         </div>
-        <Button variant="destructive" size="sm" onClick={handleDelete}>
-          <Trash2 className="size-4 mr-1.5" /> Delete Account
-        </Button>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-border/60">
+          <div className="flex items-center gap-4">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary text-lg font-bold ring-2 ring-primary/20 shrink-0">
+              {initials}
+            </span>
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-bold text-foreground">{user.name}</h1>
+                <Badge variant={user.role === 'ADMIN' ? 'blue' : 'gray'}>
+                  <ShieldCheck className="size-3 mr-1 inline" />
+                  {user.role}
+                </Badge>
+                {activeBan && (
+                  <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-destructive/10 text-destructive border border-destructive/20">
+                    Banned
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="size-3.5" />
+              <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {user.email_verified_at ? (
+                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                  <UserCheck className="size-3.5" /> Verified
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <UserX className="size-3.5" /> Unverified
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* 2-Column Split: Profile Settings & Security / Ban Controls */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="border border-border rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold">{t('details.profile')}</h2>
+        {/* Profile Edit Card */}
+        <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs space-y-5">
+          <div className="border-b border-border/60 pb-3">
+            <h2 className="text-base font-bold text-foreground">{t('details.profile')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Edit core user credentials and permission levels.</p>
+          </div>
+
           <form onSubmit={handleUpdate} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="name">{t('fields.name') || 'Name'}</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="name">{t('fields.name')}</Label>
               <Input id="name" value={editName} onChange={(e) => setDraftName(e.target.value)} required />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="email">{t('fields.email') || 'Email'}</Label>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email">{t('fields.email')}</Label>
               <Input id="email" type="email" value={editEmail} onChange={(e) => setDraftEmail(e.target.value)} required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="role">{t('fields.role') || 'Role'}</Label>
-                <select id="role" value={editRole} onChange={(e) => setDraftRole(e.target.value)} className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="role">{t('fields.role')}</Label>
+                <select
+                  id="role"
+                  value={editRole}
+                  onChange={(e) => setDraftRole(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+                >
                   <option value="USER">{t('roles.USER')}</option>
                   <option value="ADMIN">{t('roles.ADMIN')}</option>
                 </select>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="status">{t('fields.status') || 'Status'}</Label>
-                <select id="status" value={editIsActive ? 'true' : 'false'} onChange={(e) => setDraftIsActive(e.target.value === 'true')} className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+
+              <div className="space-y-1.5">
+                <Label htmlFor="status">{t('fields.status')}</Label>
+                <select
+                  id="status"
+                  value={editIsActive ? 'true' : 'false'}
+                  onChange={(e) => setDraftIsActive(e.target.value === 'true')}
+                  className="w-full h-10 px-3 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+                >
                   <option value="true">{t('status.active')}</option>
                   <option value="false">{t('status.inactive')}</option>
                 </select>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">{t('fields.password') || 'New Password'}</Label>
-              <Input id="password" type="password" placeholder="Leave blank to keep current password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} />
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="flex items-center gap-1.5">
+                <KeyRound className="size-3.5 text-muted-foreground" />
+                <span>{t('fields.newPassword')}</span>
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder={t('fields.passwordHint')}
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+              />
             </div>
-            <div className="text-xs text-muted-foreground pt-2">
-              <p>{t('fields.id')}: {user.id}</p>
-              <p>{t('fields.joined')}: {new Date(user.created_at).toLocaleDateString()}</p>
-              <p>{t('fields.verified')}: {user.email_verified_at ? t('status.yes') : t('status.no')}</p>
-            </div>
-            <Button type="submit" disabled={isUpdating} className="w-full">
-              {isUpdating ? 'Saving...' : 'Save Changes'}
+
+            <Button type="submit" disabled={isUpdating} loading={isUpdating} className="w-full gap-2 shadow-xs">
+              <Save className="size-4" />
+              <span>{t('details.saveChanges')}</span>
             </Button>
           </form>
         </div>
 
-        <div className="border border-destructive/20 bg-destructive/5 rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-destructive">{t('details.banManagement')}</h2>
-          
+        {/* Security & Ban Management Card */}
+        <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs space-y-5">
+          <div className="border-b border-border/60 pb-3">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <ShieldAlert className="size-4 text-destructive" />
+              <span>{t('details.banManagement')}</span>
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Restrict or suspend user login access.</p>
+          </div>
+
           {activeBan ? (
-            <div className="space-y-4">
-              <div className="p-3 bg-destructive/10 rounded-lg text-sm text-destructive border border-destructive/20">
-                <p><strong>{t('fields.status')}:</strong> {t('details.banned')}</p>
-                <p><strong>{t('details.reason')}:</strong> {activeBan.reason}</p>
-                <p><strong>{t('details.expires')}:</strong> {activeBan.expires_at ? new Date(activeBan.expires_at).toLocaleString() : t('details.permanent')}</p>
+            <div className="p-4 rounded-2xl border border-destructive/30 bg-destructive/5 space-y-3">
+              <div className="flex items-center gap-2 text-destructive font-bold text-sm">
+                <AlertTriangle className="size-4 shrink-0" />
+                <span>{t('details.banned')}</span>
               </div>
-              <Button variant="outline" onClick={handleUnban} className="w-full">{t('details.liftBan')}</Button>
+              <p className="text-xs text-foreground/90">
+                <strong>{t('details.reason')}:</strong> {activeBan.reason}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <strong>{t('details.expires')}:</strong>{' '}
+                {activeBan.expires_at ? new Date(activeBan.expires_at).toLocaleString() : t('details.permanent')}
+              </p>
+              <Button variant="outline" onClick={handleUnban} className="w-full text-xs">
+                {t('details.liftBan')}
+              </Button>
             </div>
           ) : (
             <form onSubmit={handleBan} className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="reason">{t('details.banReason')}</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="banReason">{t('details.banReason')}</Label>
                 <Input
-                  id="reason"
+                  id="banReason"
                   placeholder={t('details.banReasonPlaceholder')}
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
                   required
                 />
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="expires">{t('details.banExpires')}</Label>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="banExpires">{t('details.banExpires')}</Label>
                 <Input
-                  id="expires"
+                  id="banExpires"
                   type="datetime-local"
                   value={banExpiresAt}
                   onChange={(e) => setBanExpiresAt(e.target.value)}
                 />
               </div>
-              <Button type="submit" variant="destructive" className="w-full" disabled={isBanning}>
-                {isBanning ? t('details.banning') : t('details.banUser')}
+
+              <Button type="submit" variant="destructive" className="w-full text-xs" disabled={isBanning} loading={isBanning}>
+                {t('details.banUser')}
               </Button>
             </form>
           )}
         </div>
       </div>
 
-      {/* Sessions & Activity */}
-      <div className="grid grid-cols-1">
-        <UserSessionsPanel userId={id} />
-      </div>
+      {/* User Sessions & Activity Audit Panel */}
+      <UserSessionsPanel userId={id} />
     </div>
   );
 }

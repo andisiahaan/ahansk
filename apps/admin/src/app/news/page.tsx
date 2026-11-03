@@ -2,25 +2,17 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
+import { Plus } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PageLayout, PageHeader, DataTable, Pagination } from '@/components/ui/page-layout';
+import { PageLayout, PageHeader, Pagination } from '@/components/ui/page-layout';
 import { useAdminTablePagination } from '@/hooks/use-admin-table-pagination';
-import { cn } from '@/lib/cn';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { NewsForm, type NewsFormState } from './_components/news-form';
-
-interface NewsItem {
-  id: string | number;
-  title: string;
-  slug: string;
-  type: string;
-  is_published: boolean;
-  is_pinned: boolean;
-  published_at: string | null;
-  expires_at: string | null;
-}
+import { NewsFilterBar } from './_components/news-filter-bar';
+import { NewsDataView, type AdminNewsItem } from './_components/news-data-view';
 
 const EMPTY: NewsFormState = {
   title: '',
@@ -35,16 +27,12 @@ const EMPTY: NewsFormState = {
 
 const PAGE_SIZE = 20;
 
-const TYPE_COLORS: Record<string, string> = {
-  ANNOUNCEMENT: 'bg-primary/12 text-primary',
-  UPDATE: 'bg-success/12 text-success',
-  MAINTENANCE: 'bg-destructive/12 text-destructive',
-};
-
 export default function NewsPage() {
+  const t = useTranslations('news');
   const [editing, setEditing] = useState<string | number | 'new' | null>(null);
   const [form, setForm] = useState<NewsFormState>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   const { page, setPage, resetPage } = useAdminTablePagination();
   const [search, setSearch] = useState('');
@@ -57,7 +45,7 @@ export default function NewsPage() {
     queryKey: ['admin-news'],
     queryFn: async () => {
       const { data } = await api.get('/admin/news', { params: { limit: 100 } });
-      return (data.data?.items as NewsItem[]) ?? [];
+      return (data.data?.items as AdminNewsItem[]) ?? [];
     },
   });
   const items = newsData ?? [];
@@ -74,7 +62,7 @@ export default function NewsPage() {
       });
       setEditing(id);
     } catch {
-      toast.error('Failed to load item.');
+      toast.error(t('messages.loadFailed'));
     }
   };
 
@@ -88,25 +76,26 @@ export default function NewsPage() {
       };
       if (editing === 'new') await api.post('/admin/news', body);
       else await api.patch(`/admin/news/${editing}`, body);
-      toast.success('Saved.');
+      toast.success(t('messages.saved'));
       setEditing(null);
       setForm(EMPTY);
       await refetch();
     } catch {
-      toast.error('Failed to save.');
+      toast.error(t('messages.saveFailed'));
     } finally {
       setSaving(false);
     }
   };
 
-  const del = async (id: string | number) => {
-    if (!confirm('Delete this news item?')) return;
+  const handleDelete = async () => {
+    if (!deletingId) return;
     try {
-      await api.delete(`/admin/news/${id}`);
+      await api.delete(`/admin/news/${deletingId}`);
       await refetch();
-      toast.success('Deleted.');
+      toast.success(t('messages.deleted'));
+      setDeletingId(null);
     } catch {
-      toast.error('Failed to delete.');
+      toast.error(t('messages.deleteFailed'));
     }
   };
 
@@ -127,7 +116,7 @@ export default function NewsPage() {
   }
 
   const filtered = items.filter((n) => {
-    if (search && !n.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !n.title.toLowerCase().includes(search.toLowerCase()) && !n.slug.toLowerCase().includes(search.toLowerCase())) return false;
     if (typeFilter && n.type !== typeFilter) return false;
     if (statusFilter === 'PUBLISHED' && !n.is_published) return false;
     if (statusFilter === 'DRAFT' && n.is_published) return false;
@@ -146,8 +135,8 @@ export default function NewsPage() {
   return (
     <PageLayout>
       <PageHeader
-        title="News"
-        description={`${filtered.length} items`}
+        title={t('list.title')}
+        description={`${filtered.length} ${t('list.total')}`}
         action={
           <Button
             onClick={() => {
@@ -155,129 +144,42 @@ export default function NewsPage() {
               setForm({ ...EMPTY, published_at: now, is_published: true });
               setEditing('new');
             }}
+            className="gap-2 shadow-xs"
           >
-            + New Item
+            <Plus className="size-4" />
+            <span>{t('actions.create')}</span>
           </Button>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <Input
-          placeholder="Search news…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            resetPage();
-          }}
-          className="max-w-sm"
-        />
-        <select
-          value={typeFilter}
-          onChange={(e) => {
-            setTypeFilter(e.target.value);
-            resetPage();
-          }}
-          className="h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          <option value="">All Types</option>
-          <option value="ANNOUNCEMENT">ANNOUNCEMENT</option>
-          <option value="UPDATE">UPDATE</option>
-          <option value="MAINTENANCE">MAINTENANCE</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            resetPage();
-          }}
-          className="h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          <option value="">All Statuses</option>
-          <option value="PUBLISHED">Published</option>
-          <option value="DRAFT">Draft</option>
-        </select>
-        <select
-          value={sortBy}
-          onChange={(e) => {
-            setSortBy(e.target.value);
-            resetPage();
-          }}
-          className="h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          <option value="published_at">Published At</option>
-          <option value="title">Title</option>
-        </select>
-        <select
-          value={order}
-          onChange={(e) => {
-            setOrder(e.target.value);
-            resetPage();
-          }}
-          className="h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
-      </div>
+      <ConfirmModal
+        isOpen={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={handleDelete}
+        title={t('messages.confirmDelete')}
+        confirmLabel={t('actions.delete')}
+        cancelLabel={t('actions.cancel')}
+      />
 
-      <DataTable>
-        <table className="w-full text-sm border-collapse min-w-[800px]">
-          <thead className="bg-muted text-muted-foreground text-xs uppercase">
-            <tr>
-              {['Title', 'Type', 'Pinned', 'Published', 'Expires', 'Actions'].map((h) => (
-                <th key={h} className="px-6 py-3.5 text-left font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((n) => (
-              <tr
-                key={n.id}
-                className="hover:bg-muted/40 transition-colors cursor-pointer"
-                onClick={() => startEdit(n.id)}
-              >
-                <td className="px-6 py-3.5 font-medium text-foreground max-w-[280px] truncate">{n.title}</td>
-                <td className="px-6 py-3.5">
-                  <span
-                    className={cn(
-                      'inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] font-bold tracking-wide',
-                      TYPE_COLORS[n.type] ?? ''
-                    )}
-                  >
-                    {n.type}
-                  </span>
-                </td>
-                <td className="px-6 py-3.5 text-xs text-muted-foreground">{n.is_pinned ? '📌' : '—'}</td>
-                <td className="px-6 py-3.5 text-xs text-muted-foreground">
-                  {n.is_published ? (n.published_at ? new Date(n.published_at).toLocaleDateString() : 'Yes') : 'Draft'}
-                </td>
-                <td className="px-6 py-3.5 text-xs text-muted-foreground">
-                  {n.expires_at ? new Date(n.expires_at).toLocaleDateString() : '—'}
-                </td>
-                <td className="px-6 py-3.5">
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="outline" size="sm" onClick={() => startEdit(n.id)}>
-                      Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => del(n.id)}>
-                      Delete
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
-                  No news items
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </DataTable>
+      <NewsFilterBar
+        search={search}
+        setSearch={setSearch}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        order={order}
+        setOrder={setOrder}
+        resetPage={resetPage}
+      />
+
+      <NewsDataView
+        items={filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)}
+        onStartEdit={startEdit}
+        onDelete={(id) => setDeletingId(id)}
+      />
 
       <Pagination
         page={page}

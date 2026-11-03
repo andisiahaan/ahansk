@@ -2,6 +2,7 @@
   "dashboard": "Dashboard",
   "users": "Users",
   "news": "News",
+  "notifications": "Notifications",
   "settings": "Settings",
   "logout": "Logout",
   "profile": "My Profile",
@@ -9,5 +10,14 @@
   "access_denied": "Access Denied",
   "access_denied_desc": "You are currently signed in, but you do not have administrator privileges or your session has expired.",
   "sign_out_switch": "Sign out & Switch Account",
-  "loading": "Loading…"
+  "loading": "Loading…",
+  "overview": "Overview",
+  "management": "Management",
+  "communications": "Communications",
+  "system": "System",
+  "api_online": "API Online",
+  "api_offline": "API Offline",
+  "status": "Status",
+  "switch_account": "Switch Account",
+  "system_version": "Enterprise Admin v1.0"
 }

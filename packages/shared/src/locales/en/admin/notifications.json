@@ -1,17 +1,35 @@
 {
-  "title": "Notifications",
-  "allNotifications": "All Notifications",
+  "title": "Notifications & Broadcasts",
+  "subtitle": "Send announcements to users and audit dispatch history.",
+  "allNotifications": "Notification Audit History",
   "broadcast": {
-    "title": "Send Broadcast",
-    "typeLabel": "Notification Type",
+    "title": "Dispatch System Broadcast",
+    "subtitle": "Compose and broadcast real-time messages to selected target audiences.",
+    "typeLabel": "Notification Event Type",
     "typePlaceholder": "Select type...",
-    "titleLabel": "Title",
-    "messageLabel": "Message",
-    "targetLabel": "Target",
-    "targetAll": "All Users",
-    "targetAdmins": "Admins Only",
-    "submit": "Send Broadcast",
-    "success": "Broadcast sent successfully"
+    "titleLabel": "Notification Subject",
+    "titlePlaceholder": "e.g. Scheduled System Maintenance",
+    "messageLabel": "Message Content",
+    "messagePlaceholder": "Provide complete details for this notification...",
+    "targetLabel": "Audience Target",
+    "targetAll": "All Active Users",
+    "targetAllDesc": "Delivered to every registered user on the platform",
+    "targetAdmins": "Administrators Only",
+    "targetAdminsDesc": "Restricted dispatch only to users with the ADMIN role",
+    "previewTitle": "Message Preview",
+    "previewDesc": "How this notification appears to recipients in their inbox",
+    "submit": "Dispatch Broadcast",
+    "sending": "Dispatching...",
+    "success": "Broadcast successfully dispatched to audience."
+  },
+  "history": {
+    "title": "Notification Logs",
+    "subtitle": "Audit trail of sent notifications and recipients",
+    "recipient": "Recipient",
+    "type": "Type",
+    "subject": "Subject",
+    "timestamp": "Date Sent",
+    "empty": "No notifications have been recorded yet."
   },
   "globalSettings": {
     "title": "Global Notification Settings",
@@ -19,6 +37,6 @@
     "categoriesTitle": "Notification Categories",
     "saved": "Settings saved"
   },
-  "empty": "No notifications",
+  "empty": "No notifications found",
   "sender": "To {count} users"
 }

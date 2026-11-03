@@ -1,18 +1,42 @@
 'use client';
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
+import {
+  Monitor,
+  Globe,
+  Trash2,
+  ShieldOff,
+  Activity,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
-import { Monitor, Globe, Trash2, ShieldOff } from 'lucide-react';
 
-interface Session { id: number; user_agent: string | null; ip_address: string | null; created_at: string; expires_at: string | null }
-interface Activity { id: number; type: string; ip_address: string | null; success: boolean; created_at: string }
+interface Session {
+  id: number;
+  user_agent: string | null;
+  ip_address: string | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
+interface ActivityItem {
+  id: number;
+  type: string;
+  ip_address: string | null;
+  success: boolean;
+  created_at: string;
+}
 
 export function UserSessionsPanel({ userId }: { userId: string | number }) {
-  const [revoking, setRevoking]   = useState<number | null>(null);
+  const t = useTranslations('users');
+  const [revoking, setRevoking] = useState<number | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
-  const [tab, setTab]             = useState<'sessions' | 'activity'>('sessions');
+  const [tab, setTab] = useState<'sessions' | 'activity'>('sessions');
 
   const { data: sessions = [], refetch: refetchSessions } = useQuery({
     queryKey: ['admin-user-sessions', userId],
@@ -26,7 +50,7 @@ export function UserSessionsPanel({ userId }: { userId: string | number }) {
     queryKey: ['admin-user-activity', userId],
     queryFn: async () => {
       const res = await api.get(`/admin/users/${userId}/activity`);
-      return (res.data.data as Activity[]) ?? [];
+      return (res.data.data as ActivityItem[]) ?? [];
     },
   });
 
@@ -35,104 +59,142 @@ export function UserSessionsPanel({ userId }: { userId: string | number }) {
     try {
       await api.delete(`/admin/users/${userId}/sessions/${tokenId}`);
       await refetchSessions();
-      toast.success('Session revoked.');
-    } catch { toast.error('Failed to revoke session.'); }
-    finally { setRevoking(null); }
+      toast.success(t('sessions.revoked'));
+    } catch {
+      toast.error('Failed to revoke session.');
+    } finally {
+      setRevoking(null);
+    }
   };
 
   const revokeAll = async () => {
-    if (!confirm('Revoke ALL active sessions for this user? They will be logged out immediately.')) return;
+    if (!confirm(t('sessions.confirmRevokeAll'))) return;
     setRevokingAll(true);
     try {
       await api.delete(`/admin/users/${userId}/sessions`);
       await refetchSessions();
-      toast.success('All sessions revoked.');
-    } catch { toast.error('Failed to revoke sessions.'); }
-    finally { setRevokingAll(false); }
+      toast.success(t('sessions.revokedAll'));
+    } catch {
+      toast.error('Failed to revoke sessions.');
+    } finally {
+      setRevokingAll(false);
+    }
   };
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden col-span-full">
-      <div className="flex items-center justify-between px-5 py-3 bg-muted border-b border-border">
-        <div className="flex gap-1">
-          {(['sessions', 'activity'] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-              {t === 'sessions' ? `Active Sessions (${sessions.length})` : `Login Activity (${activity.length})`}
-            </button>
-          ))}
+    <div className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-xs">
+      {/* Header & Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-border/60 bg-muted/20">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-muted/70 border border-border/60 w-fit">
+          <button
+            type="button"
+            onClick={() => setTab('sessions')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              tab === 'sessions'
+                ? 'bg-card text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Monitor className="size-3.5" />
+            <span>{t('sessions.title')} ({sessions.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('activity')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              tab === 'activity'
+                ? 'bg-card text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Activity className="size-3.5" />
+            <span>{t('sessions.activityTitle')} ({activity.length})</span>
+          </button>
         </div>
+
         {tab === 'sessions' && sessions.length > 0 && (
-          <Button variant="destructive" size="sm" loading={revokingAll} onClick={revokeAll}>
-            <ShieldOff className="size-3.5 mr-1" /> Revoke All
+          <Button variant="destructive" size="sm" loading={revokingAll} onClick={revokeAll} className="gap-1.5 text-xs">
+            <ShieldOff className="size-3.5" />
+            <span>{t('sessions.revokeAll')}</span>
           </Button>
         )}
       </div>
 
+      {/* Sessions Tab */}
       {tab === 'sessions' && (
-        sessions.length === 0
-          ? <p className="px-5 py-6 text-sm text-muted-foreground text-center">No active sessions.</p>
-          : <table className="w-full text-sm border-collapse">
-              <thead className="bg-muted/50">
-                <tr>{['Device', 'IP', 'Created', 'Action'].map((h) => (
-                  <th key={h} className="px-4 py-2 text-left text-[0.7rem] font-bold uppercase tracking-widest text-muted-foreground">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody>
-                {sessions.map((s) => (
-                  <tr key={s.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 max-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <Monitor className="size-3.5 text-muted-foreground flex-shrink-0" />
-                        <span className="text-xs text-muted-foreground truncate">{s.user_agent ? s.user_agent.slice(0, 40) + '…' : 'Unknown'}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Globe className="size-3.5" /> {s.ip_address ?? '—'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {new Date(s.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => revoke(s.id)} disabled={revoking === s.id}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-destructive hover:text-destructive/80 transition-colors">
-                        <Trash2 className="size-3.5" /> {revoking === s.id ? '…' : 'Revoke'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        sessions.length === 0 ? (
+          <p className="p-8 text-center text-xs text-muted-foreground">{t('sessions.noSessions')}</p>
+        ) : (
+          <div className="divide-y divide-border/60">
+            {sessions.map((s) => (
+              <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Monitor className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate max-w-sm">
+                      {s.user_agent ? s.user_agent.slice(0, 50) + '…' : 'Unknown Device'}
+                    </p>
+                    <div className="flex items-center gap-2 text-[0.7rem] text-muted-foreground mt-0.5">
+                      <span className="flex items-center gap-1">
+                        <Globe className="size-3" />
+                        {s.ip_address ?? '—'}
+                      </span>
+                      <span>•</span>
+                      <span>{new Date(s.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => revoke(s.id)}
+                  disabled={revoking === s.id}
+                  className="gap-1.5 text-xs text-destructive hover:bg-destructive/10 self-end sm:self-center"
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>{revoking === s.id ? t('sessions.revoking') : t('sessions.revoke')}</span>
+                </Button>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
+      {/* Login Activity Tab */}
       {tab === 'activity' && (
-        activity.length === 0
-          ? <p className="px-5 py-6 text-sm text-muted-foreground text-center">No activity recorded.</p>
-          : <table className="w-full text-sm border-collapse">
-              <thead className="bg-muted/50">
-                <tr>{['Event', 'IP', 'Result', 'Time'].map((h) => (
-                  <th key={h} className="px-4 py-2 text-left text-[0.7rem] font-bold uppercase tracking-widest text-muted-foreground">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody>
-                {activity.map((a) => (
-                  <tr key={a.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-xs font-medium text-foreground">{a.type}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{a.ip_address ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-[0.65rem] font-bold px-2 py-0.5 rounded-full ${a.success ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
-                        {a.success ? 'Success' : 'Failed'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        activity.length === 0 ? (
+          <p className="p-8 text-center text-xs text-muted-foreground">{t('sessions.noActivity')}</p>
+        ) : (
+          <div className="divide-y divide-border/60">
+            {activity.map((a) => (
+              <div key={a.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    a.success ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-destructive/10 text-destructive'
+                  }`}>
+                    {a.success ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{a.type}</p>
+                    <p className="text-[0.7rem] text-muted-foreground">{a.ip_address ?? '—'}</p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${
+                    a.success ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-destructive/10 text-destructive'
+                  }`}>
+                    {a.success ? 'Success' : 'Failed'}
+                  </span>
+                  <p className="text-[0.68rem] text-muted-foreground mt-0.5">{new Date(a.created_at).toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
     </div>
   );

@@ -204,7 +204,7 @@ interface DataTableProps {
 
 export function DataTable({ children }: DataTableProps) {
   return (
-    <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+    <div className="border border-border/80 rounded-3xl bg-card overflow-hidden shadow-xs">
       <div className="overflow-x-auto">
         {children}
       </div>
