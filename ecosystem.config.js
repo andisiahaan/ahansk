@@ -35,6 +35,22 @@ module.exports = {
     },
 
     // ─────────────────────────────────────────────────────────────
+    // Web User-Facing  →  ahansk.com
+    // ─────────────────────────────────────────────────────────────
+    {
+      name:               'ahansk-web',
+      cwd:                './apps/web',
+      script:             'node_modules/next/dist/bin/next',
+      args:               'start',
+      interpreter:        'node',
+      max_memory_restart: '512M',
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: webEnv.PORT || 10312,
+      },
+    },
+
+    // ─────────────────────────────────────────────────────────────
     // Admin Panel  →  admin.ahansk.com
     // ─────────────────────────────────────────────────────────────
     {
@@ -46,25 +62,8 @@ module.exports = {
       max_memory_restart: '512M',
       env_production: {
         NODE_ENV: 'production',
-        PORT: adminEnv.PORT || 10312,
+        PORT: adminEnv.PORT || 10313,
       },
     },
-    
-    // ─────────────────────────────────────────────────────────────
-    // Web User-Facing  →  ahansk.com  (or your domain)
-    // ─────────────────────────────────────────────────────────────
-    {
-      name:               'ahansk-web',
-      cwd:                './apps/web',
-      script:             'node_modules/next/dist/bin/next',
-      args:               'start',
-      interpreter:        'node',
-      max_memory_restart: '512M',
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: webEnv.PORT || 10313,
-      },
-    },
-
   ],
 };

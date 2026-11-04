@@ -9,6 +9,7 @@ import { LoggerModule } from 'nestjs-pino';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
+import { CacheWrapperModule } from './infrastructure/cache/cache.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { RecaptchaModule } from './infrastructure/recaptcha/recaptcha.module';
 import { SettingsCacheModule } from './infrastructure/settings/settings-cache.module';
@@ -85,6 +86,7 @@ import { AppService } from './app.service';
 
     // ─── Infrastructure ───────────────────────────────────────────────────────────
     PrismaModule,
+    CacheWrapperModule,
     StorageModule,
     RecaptchaModule,
     SettingsCacheModule,
