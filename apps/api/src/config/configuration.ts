@@ -13,7 +13,11 @@ export default registerAs('app', () => {
       accessExpires: env.JWT_ACCESS_EXPIRES,
       refreshExpiresDays: env.JWT_REFRESH_EXPIRES_DAYS,
     },
-    redis: { url: env.REDIS_URL },
+    redis: {
+      url: env.REDIS_URL,
+      queueDb: env.REDIS_QUEUE_DB,
+      cacheDb: env.REDIS_CACHE_DB,
+    },
     google: { clientId: env.GOOGLE_CLIENT_ID },
     recaptcha: { secretKey: env.RECAPTCHA_SECRET_KEY },
     cors: { frontendUrl: env.FRONTEND_URL, adminUrl: env.ADMIN_URL },

@@ -14,8 +14,8 @@ App: `apps/api` — domain `api.domain.com`
 - **ORM**: Prisma — akses DB **hanya** lewat `*.repository.ts`, bukan dari service/controller langsung.
 - **Validasi**: Zod v4 via `ZodValidationPipe` yang berjalan sebagai **Global Pipe**. Semua DTO wajib direpresentasikan sebagai `class` menggunakan `createZodDto()` kustom.
 - **Auth**: `@nestjs/jwt` + `@nestjs/passport`. Token di **httpOnly cookie**. Dilengkapi dengan perlindungan CSRF (Double-Submit Cookie).
-- **Cache**: `@nestjs/cache-manager` + `@keyv/redis` (default import), Redis DB 1, namespace `cache:`.
-- **Queue**: BullMQ + Redis DB 0.
+- **Cache**: `@nestjs/cache-manager` + `@keyv/redis` (default import), Redis DB 1 (`REDIS_CACHE_DB`, default: 1), namespace `cache:`.
+- **Queue**: BullMQ + Redis DB 0 (`REDIS_QUEUE_DB`, default: 0).
 - **Logger**: `pino` via `nestjs-pino`. **Tidak boleh ada `console.*` di production code.**
 - **Rate limit**: `@nestjs/throttler`.
 - **Password**: `argon2` (Argon2id).
@@ -84,8 +84,8 @@ Error handling lewat **Exception Filter global** (`http-exception.filter.ts`).
 
 ## Caching
 
-- Redis DB 1, `CacheService` di `infrastructure/cache/`. Namespace `cache:`.
-- Redis DB 0 **khusus** BullMQ — jangan dipakai cache.
+- Redis DB 1 (`REDIS_CACHE_DB`, default: 1), `CacheService` di `infrastructure/cache/`. Namespace `cache:`.
+- Redis DB 0 (`REDIS_QUEUE_DB`, default: 0) **khusus** BullMQ — jangan dipakai cache.
 - Cache di-invalidate **eksplisit saat write**, bukan andalkan TTL pendek.
 
 ## Prisma Migrations

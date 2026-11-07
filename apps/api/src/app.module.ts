@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -24,6 +24,16 @@ import { QUEUE_EMAIL } from '@ahansk/shared';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
+function resolveRedisUrl(rawUrl: string, dbIndex: number): string {
+  try {
+    const parsed = new URL(rawUrl);
+    parsed.pathname = `/${dbIndex}`;
+    return parsed.toString();
+  } catch {
+    return `${rawUrl.replace(/\/.*$/, '')}/${dbIndex}`;
+  }
+}
 
 @Module({
   imports: [
@@ -59,26 +69,30 @@ import { AppService } from './app.service';
 
     // ─── Queue (BullMQ + Redis) ───────────────────────────────────────────────
     BullModule.forRootAsync({
-      useFactory: () => ({
-        connection: { url: process.env.REDIS_URL || 'redis://127.0.0.1:6379' },
-      }),
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const rawUrl =
+          config.get<string>('app.redis.url') || 'redis://127.0.0.1:6379';
+        const queueDb = config.get<number>('app.redis.queueDb') ?? 0;
+        return {
+          connection: { url: resolveRedisUrl(rawUrl, queueDb) },
+        };
+      },
     }),
     BullModule.registerQueue({ name: QUEUE_EMAIL }),
 
     // ─── Cache (Redis, namespace: cache:*) ────────────────────────────────────
     CacheModule.registerAsync({
       isGlobal: true,
-      useFactory: () => {
-        let redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-        try {
-          const urlObj = new URL(redisUrl);
-          urlObj.pathname = '/1';
-          redisUrl = urlObj.toString();
-        } catch {
-          redisUrl = redisUrl.replace(/\/$/, '') + '/1';
-        }
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const rawUrl =
+          config.get<string>('app.redis.url') || 'redis://localhost:6379';
+        const cacheDb = config.get<number>('app.redis.cacheDb') ?? 1;
         return {
-          store: new KeyvAdapter(redisUrl, { namespace: 'cache' }),
+          store: new KeyvAdapter(resolveRedisUrl(rawUrl, cacheDb), {
+            namespace: 'cache',
+          }),
           ttl: 0,
         };
       },

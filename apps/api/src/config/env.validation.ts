@@ -27,6 +27,8 @@ export const envSchema = z.object({
 
   // ─── Redis ────────────────────────────────────────────────────────────────
   REDIS_URL: z.string().url(),
+  REDIS_QUEUE_DB: z.coerce.number().int().min(0).default(0),
+  REDIS_CACHE_DB: z.coerce.number().int().min(0).default(1),
 
   // ─── Google (opsional — kosong = Google Login tidak tersedia) ──────────────
   GOOGLE_CLIENT_ID: z.string().default(''),
