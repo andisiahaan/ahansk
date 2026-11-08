@@ -18,6 +18,7 @@ export interface CaptchaContextValue {
   provider: CaptchaProviderType | null;
   siteKey: string | null;
   isEnabled: boolean;
+  isReady: boolean;
   getCaptchaToken: (action?: string) => Promise<string | undefined>;
   activeToken: string | null;
   setActiveToken: (token: string | null) => void;
@@ -29,6 +30,7 @@ const CaptchaContext = createContext<CaptchaContextValue>({
   provider: null,
   siteKey: null,
   isEnabled: false,
+  isReady: true,
   getCaptchaToken: async () => undefined,
   activeToken: null,
   setActiveToken: () => {},
@@ -68,6 +70,7 @@ function GoogleCaptchaInner({
         provider: 'google',
         siteKey,
         isEnabled: true,
+        isReady: true,
         getCaptchaToken,
         activeToken,
         setActiveToken,
@@ -175,6 +178,7 @@ function TurnstileCaptchaInner({
         provider: 'turnstile',
         siteKey,
         isEnabled: true,
+        isReady: isScriptReady,
         getCaptchaToken,
         activeToken,
         setActiveToken,

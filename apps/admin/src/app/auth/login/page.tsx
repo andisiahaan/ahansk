@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { CaptchaWidget } from '@/components/ui/captcha-widget';
 import { useRecaptcha } from '@/lib/use-recaptcha';
 
 const TotpSchema = z.object({ code: z.string().min(6).max(11, 'Invalid code format') });
@@ -175,6 +176,7 @@ function AdminLoginForm() {
         {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
       </div>
 
+      <CaptchaWidget action="admin_login" className="flex justify-center my-1" />
       <Button type="submit" loading={isSubmitting} className="w-full h-10 shadow-xs font-semibold">
         Sign In to Admin
       </Button>

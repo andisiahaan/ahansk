@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { CaptchaWidget } from '@/components/ui/captcha-widget';
 import { useRecaptcha } from '@/lib/use-recaptcha';
 import { useAuthSettings } from '@/lib/use-auth-settings';
 import { GoogleAuthButton } from '@/components/auth/google-auth-button';
@@ -144,6 +145,7 @@ function LoginForm() {
           <Input type="password" placeholder="••••••••" {...register('password')} />
           {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
         </div>
+        <CaptchaWidget action="login" className="flex justify-center my-1" />
         <Button type="submit" loading={isSubmitting} className="w-full">
           {t('login.submit')}
         </Button>

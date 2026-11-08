@@ -18,13 +18,20 @@ export function CaptchaWidget({
   onError,
   onExpire,
 }: CaptchaWidgetProps) {
-  const { provider, siteKey, isEnabled, setActiveToken, setTurnstileWidgetId } =
+  const { provider, siteKey, isEnabled, isReady, setActiveToken, setTurnstileWidgetId } =
     useCaptchaContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (provider !== 'turnstile' || !siteKey || !containerRef.current || !window.turnstile) {
+    if (
+      provider !== 'turnstile' ||
+      !siteKey ||
+      !containerRef.current ||
+      !isReady ||
+      !window.turnstile ||
+      widgetIdRef.current
+    ) {
       return;
     }
 
@@ -59,7 +66,17 @@ export function CaptchaWidget({
         setTurnstileWidgetId(null);
       }
     };
-  }, [provider, siteKey, action, setActiveToken, setTurnstileWidgetId, onVerify, onError, onExpire]);
+  }, [
+    provider,
+    siteKey,
+    action,
+    isReady,
+    setActiveToken,
+    setTurnstileWidgetId,
+    onVerify,
+    onError,
+    onExpire,
+  ]);
 
   if (!isEnabled || provider !== 'turnstile') {
     return null;

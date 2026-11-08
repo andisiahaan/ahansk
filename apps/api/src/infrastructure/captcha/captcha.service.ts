@@ -32,7 +32,7 @@ export class CaptchaService {
   async verify(token: string | undefined, remoteIp?: string): Promise<void> {
     if (!this.isEnabled) return;
 
-    if (!token) {
+    if (!token || typeof token !== 'string' || token.length === 0 || token.length > 2048) {
       throw new BadRequestException(
         messages.common.captchaInvalid ?? messages.common.recaptchaInvalid,
       );
@@ -60,6 +60,7 @@ export class CaptchaService {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
+        signal: AbortSignal.timeout(10_000),
         body: params.toString(),
       });
 

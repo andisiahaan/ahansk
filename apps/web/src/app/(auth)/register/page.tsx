@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { CaptchaWidget } from '@/components/ui/captcha-widget';
 import { useRecaptcha } from '@/lib/use-recaptcha';
 import { RegisterSchema, type RegisterDto } from '@ahansk/shared';
 import { useAuthSettings } from '@/lib/use-auth-settings';
@@ -114,6 +115,7 @@ function RegisterForm() {
             </Link>.
           </label>
         </div>
+        <CaptchaWidget action="register" className="flex justify-center my-1" />
         <Button type="submit" loading={isSubmitting} className="w-full">
           {t('register.submit')}
         </Button>

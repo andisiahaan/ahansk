@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRecaptcha } from '@/lib/use-recaptcha';
+import { CaptchaWidget } from '@/components/ui/captcha-widget';
 import { ForgotPasswordSchema, type ForgotPasswordDto } from '@ahansk/shared';
 
 function ForgotPasswordForm() {
@@ -39,6 +40,7 @@ function ForgotPasswordForm() {
         <Input type="email" placeholder="you@example.com" {...register('email')} />
         {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
       </div>
+      <CaptchaWidget action="forgot_password" className="flex justify-center my-1" />
       <Button type="submit" loading={isSubmitting} className="w-full">Send Reset Link</Button>
       <Link href="/login" className="text-center text-sm text-primary hover:underline">← Back to login</Link>
     </form>
