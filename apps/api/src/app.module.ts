@@ -11,6 +11,7 @@ import { validate } from './config/env.validation';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { CacheWrapperModule } from './infrastructure/cache/cache.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
+import { CaptchaModule } from './infrastructure/captcha/captcha.module';
 import { RecaptchaModule } from './infrastructure/recaptcha/recaptcha.module';
 import { SettingsCacheModule } from './infrastructure/settings/settings-cache.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -102,6 +103,7 @@ function resolveRedisUrl(rawUrl: string, dbIndex: number): string {
     PrismaModule,
     CacheWrapperModule,
     StorageModule,
+    CaptchaModule,
     RecaptchaModule,
     SettingsCacheModule,
 

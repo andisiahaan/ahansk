@@ -19,7 +19,11 @@ export default registerAs('app', () => {
       cacheDb: env.REDIS_CACHE_DB,
     },
     google: { clientId: env.GOOGLE_CLIENT_ID },
-    recaptcha: { secretKey: env.RECAPTCHA_SECRET_KEY },
+    captcha: {
+      provider: (env.CAPTCHA_PROVIDER || (env.RECAPTCHA_SECRET_KEY ? 'google' : '')) as 'google' | 'turnstile' | '',
+      secretKey: env.CAPTCHA_SECRET_KEY || env.RECAPTCHA_SECRET_KEY || '',
+    },
+    recaptcha: { secretKey: env.CAPTCHA_SECRET_KEY || env.RECAPTCHA_SECRET_KEY || '' },
     cors: { frontendUrl: env.FRONTEND_URL, adminUrl: env.ADMIN_URL },
     smtp: {
       host: env.SMTP_HOST,

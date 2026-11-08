@@ -33,6 +33,7 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 | Queue | Redis DB 0 + BullMQ |
 | Validasi | Zod v4 (backend: global `ZodValidationPipe` + `createZodDto` class; frontend: react-hook-form + zodResolver) |
 | i18n | next-intl, cookie-based locale, semua locale di `packages/shared` |
+| Captcha | Dual Provider: Google reCAPTCHA v3 / Cloudflare Turnstile, dikonfigurasi via `.env` (kosong = nonaktif) |
 
 ## Monorepo Structure
 

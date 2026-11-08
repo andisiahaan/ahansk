@@ -15,7 +15,7 @@ import { AuthRepository } from './auth.repository';
 import { AuthTokenService } from './auth-token.service';
 import { AuthEmailChangeService } from './auth-email-change.service';
 import { EmailService } from '../../infrastructure/email/email.service';
-import { RecaptchaService } from '../../infrastructure/recaptcha/recaptcha.service';
+import { CaptchaService } from '../../infrastructure/captcha/captcha.service';
 import { SettingsCache } from '../../infrastructure/settings/settings-cache.service';
 import { NotificationService } from '../notifications/notification.service';
 import { BanService } from '../users/ban.service';
@@ -43,7 +43,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly email: EmailService,
-    private readonly recaptcha: RecaptchaService,
+    private readonly captcha: CaptchaService,
     private readonly settingsCache: SettingsCache,
     private readonly notifications: NotificationService,
     private readonly banService: BanService,
@@ -57,7 +57,7 @@ export class AuthService {
   // ─── Register ─────────────────────────────────────────────────────────────
 
   async register(dto: RegisterDto): Promise<{ message: string }> {
-    await this.recaptcha.verify(dto.recaptchaToken);
+    await this.captcha.verify(dto.captchaToken ?? dto.recaptchaToken);
 
     const authSettings = await this.settingsCache.get(SETTING_KEYS.AUTH);
     if (!authSettings.is_registration_enabled) {
@@ -102,7 +102,7 @@ export class AuthService {
   // ─── Login ────────────────────────────────────────────────────────────────
 
   async login(dto: LoginDto, res: Response, ip?: string, ua?: string) {
-    await this.recaptcha.verify(dto.recaptchaToken);
+    await this.captcha.verify(dto.captchaToken ?? dto.recaptchaToken);
     const user = await this.repo.findUserByEmail(dto.email);
 
     const authSettings = await this.settingsCache.get(SETTING_KEYS.AUTH);
@@ -329,7 +329,7 @@ export class AuthService {
   // ─── Password Reset ───────────────────────────────────────────────────────
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
-    await this.recaptcha.verify(dto.recaptchaToken);
+    await this.captcha.verify(dto.captchaToken ?? dto.recaptchaToken);
     const user = await this.repo.findUserByEmail(dto.email);
     if (user) {
       const raw = crypto.randomBytes(32).toString('hex');

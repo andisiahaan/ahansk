@@ -16,13 +16,18 @@ export class AppService {
   constructor(private readonly config: ConfigService) {}
 
   getHealth(): HealthStatus {
+    const hasCaptcha = !!(
+      this.config.get<string>('app.captcha.secretKey') ||
+      this.config.get<string>('app.recaptcha.secretKey')
+    );
+
     return {
       name: 'ahansk-backend',
       status: 'running',
       version: '1.0.0',
       features: {
         googleAuth: !!this.config.get<string>('app.google.clientId'),
-        recaptcha: !!this.config.get<string>('app.recaptcha.secretKey'),
+        recaptcha: hasCaptcha,
       },
     };
   }

@@ -131,6 +131,11 @@ Gunakan `PaginatedResponse<T>` dan `buildPaginationMeta()`.
 ## Fitur Opsional (tambah hanya jika project membutuhkan)
 
 - **Google Login**: `google-auth-library` — Google ID token selalu diverifikasi di server. Google One Tap di `frontend`, bukan admin.
+- **Captcha System (Dual Provider: Google & Turnstile)**:
+  - Menggunakan `CaptchaService` (`src/infrastructure/captcha/captcha.service.ts`), modul global `CaptchaModule`.
+  - Pilihan provider via `.env`: `CAPTCHA_PROVIDER=google|turnstile` dan `CAPTCHA_SECRET_KEY`.
+  - Jika kosong, verifikasi otomatis dilewati (disabled).
+  - Legacy `RECAPTCHA_SECRET_KEY` dan `RecaptchaService` tetap didukung sebagai fallback.
 - **Realtime**: `@nestjs/websockets` + `platform-socket.io`. Tambah ke dependencies hanya jika dibutuhkan.
 
 ## TypeScript

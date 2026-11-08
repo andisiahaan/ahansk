@@ -22,6 +22,7 @@ export const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(8).max(128),
+  captchaToken: z.string().optional(),
   recaptchaToken: z.string().optional(),
 });
 export type RegisterDto = z.infer<typeof RegisterSchema>;
@@ -29,6 +30,7 @@ export type RegisterDto = z.infer<typeof RegisterSchema>;
 export const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  captchaToken: z.string().optional(),
   recaptchaToken: z.string().optional(),
 });
 export type LoginDto = z.infer<typeof LoginSchema>;
@@ -46,6 +48,7 @@ export type VerifyTotpDto = z.infer<typeof VerifyTotpSchema>;
 
 export const ForgotPasswordSchema = z.object({
   email: z.string().email(),
+  captchaToken: z.string().optional(),
   recaptchaToken: z.string().optional(),
 });
 export type ForgotPasswordDto = z.infer<typeof ForgotPasswordSchema>;

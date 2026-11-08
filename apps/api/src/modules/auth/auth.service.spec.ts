@@ -4,7 +4,7 @@ import { AuthRepository } from './auth.repository';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../../infrastructure/email/email.service';
-import { RecaptchaService } from '../../infrastructure/recaptcha/recaptcha.service';
+import { CaptchaService } from '../../infrastructure/captcha/captcha.service';
 import { SettingsCache } from '../../infrastructure/settings/settings-cache.service';
 import { NotificationService } from '../notifications/notification.service';
 import { OtpService } from '../otp/otp.service';
@@ -47,7 +47,7 @@ describe('AuthService', () => {
     sendEmailVerification: jest.fn(),
     sendPasswordReset: jest.fn(),
   };
-  const mockRecaptcha = { verify: jest.fn() };
+  const mockCaptcha = { verify: jest.fn() };
   const mockSettingsCache = { get: jest.fn() };
   const mockNotifications = { sendToAdmins: jest.fn(), send: jest.fn() };
   const mockOtp = { sendOtp: jest.fn(), verifyOtp: jest.fn() };
@@ -74,7 +74,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwt },
         { provide: ConfigService, useValue: mockConfig },
         { provide: EmailService, useValue: mockEmail },
-        { provide: RecaptchaService, useValue: mockRecaptcha },
+        { provide: CaptchaService, useValue: mockCaptcha },
         { provide: SettingsCache, useValue: mockSettingsCache },
         { provide: NotificationService, useValue: mockNotifications },
         { provide: OtpService, useValue: mockOtp },
@@ -91,7 +91,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should throw BadRequestException if registration is disabled', async () => {
-      mockRecaptcha.verify.mockResolvedValue(true);
+      mockCaptcha.verify.mockResolvedValue(true);
       mockSettingsCache.get.mockResolvedValue({
         is_registration_enabled: false,
       });
@@ -107,7 +107,7 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException if email exists', async () => {
-      mockRecaptcha.verify.mockResolvedValue(true);
+      mockCaptcha.verify.mockResolvedValue(true);
       mockSettingsCache.get.mockResolvedValue({
         is_registration_enabled: true,
       });

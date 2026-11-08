@@ -33,7 +33,9 @@ export const envSchema = z.object({
   // ─── Google (opsional — kosong = Google Login tidak tersedia) ──────────────
   GOOGLE_CLIENT_ID: z.string().default(''),
 
-  // ─── reCAPTCHA (opsional — kosong = captcha dinonaktifkan) ───────────────
+  // ─── Captcha (opsional: 'google' | 'turnstile' — kosong = captcha dinonaktifkan) ─
+  CAPTCHA_PROVIDER: z.enum(['google', 'turnstile', '']).default(''),
+  CAPTCHA_SECRET_KEY: z.string().default(''),
   RECAPTCHA_SECRET_KEY: z.string().default(''),
 
   // ─── CORS ─────────────────────────────────────────────────────────────────

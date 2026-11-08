@@ -37,6 +37,14 @@ App: `apps/web` — domain `domain.com`
 
 - Wajib dioptimasi minimal: Mobile, Tablet, Desktop.
 
+## Captcha (Google reCAPTCHA & Cloudflare Turnstile)
+
+- Menggunakan `CaptchaProvider` (`src/providers/captcha-provider.tsx`) dan hook `useCaptcha` (`src/lib/use-captcha.ts`).
+- Variabel env: `NEXT_PUBLIC_CAPTCHA_PROVIDER` (`google` atau `turnstile`) dan `NEXT_PUBLIC_CAPTCHA_SITE_KEY`.
+- Jika env dikosongkan, captcha otomatis nonaktif (bypassed).
+- Alias `useRecaptcha` dan `RecaptchaProvider` dipertahankan untuk backward-compatibility.
+- Komponen opsional `<CaptchaWidget />` tersedia di `components/ui/captcha-widget.tsx` jika ingin menampilkan challenge box interaktif untuk Turnstile.
+
 ## i18n (Internasionalisasi)
 
 - **Semua string UI wajib `next-intl`** — dilarang hardcode string dalam JSX/TSX.

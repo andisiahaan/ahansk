@@ -49,6 +49,7 @@ export const messages = {
     serverError: 'An unexpected error occurred.',
     validationError: 'Validation failed.',
     recaptchaInvalid: 'reCAPTCHA verification failed.',
+    captchaInvalid: 'CAPTCHA verification failed.',
   },
 } as const;
 
