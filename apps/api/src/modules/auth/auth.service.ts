@@ -29,6 +29,10 @@ import type {
   AuthUser,
   RequestEmailChangeDto,
   VerifyEmailChangeOtpDto,
+  RequestCurrentEmailOtpDto,
+  VerifyCurrentEmailOtpDto,
+  RequestNewEmailOtpDto,
+  ConfirmEmailChangeDto,
 } from '@ahansk/shared';
 
 @Injectable()
@@ -317,6 +321,22 @@ export class AuthService {
   }
 
   // ─── Email Change Delegation ──────────────────────────────────────────────
+
+  async requestCurrentEmailOtp(userId: number, dto: RequestCurrentEmailOtpDto) {
+    return this.emailChangeService.requestCurrentEmailOtp(userId, dto);
+  }
+
+  async verifyCurrentEmailOtp(userId: number, dto: VerifyCurrentEmailOtpDto) {
+    return this.emailChangeService.verifyCurrentEmailOtp(userId, dto);
+  }
+
+  async requestNewEmailOtp(userId: number, dto: RequestNewEmailOtpDto) {
+    return this.emailChangeService.requestNewEmailOtp(userId, dto);
+  }
+
+  async confirmEmailChange(userId: number, dto: ConfirmEmailChangeDto) {
+    return this.emailChangeService.confirmEmailChange(userId, dto);
+  }
 
   async requestEmailChange(userId: number, dto: RequestEmailChangeDto) {
     return this.emailChangeService.requestEmailChange(userId, dto);

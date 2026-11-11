@@ -75,6 +75,12 @@ const { modules, frontend } = localeRegistry[locale];
   export default createNextIntlPlugin('./src/i18n/request.ts');
   ```
 
+## Language & Theme Controls (Berdampingan)
+
+- Seluruh halaman publik (Landing Page, Navbar, Legal Pages) **wajib memiliki `LanguageSwitcher` dan `ThemeToggle` yang saling berdampingan**.
+- Daftar bahasa terdefinisi di `packages/shared/src/locales/languages.ts` (`SUPPORTED_LANGUAGES`).
+- Pilihan bahasa disimpan ke cookie `locale` (1 tahun), pilihan tema disimpan ke cookie `theme` (1 tahun) dan `localStorage` — **tidak disimpan ke database**.
+
 ## TypeScript
 
 - **Dilarang `any`** — gunakan `unknown` + type narrowing.

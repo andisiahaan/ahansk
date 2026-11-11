@@ -14,6 +14,7 @@ const dotenv = require('dotenv');
 // Load environment variables for each app explicitly
 const apiEnv = dotenv.config({ path: './apps/api/.env' }).parsed || {};
 const webEnv = dotenv.config({ path: './apps/web/.env' }).parsed || {};
+const appEnv = dotenv.config({ path: './apps/app/.env' }).parsed || {};
 const adminEnv = dotenv.config({ path: './apps/admin/.env' }).parsed || {};
 
 module.exports = {
@@ -35,7 +36,7 @@ module.exports = {
     },
 
     // ─────────────────────────────────────────────────────────────
-    // Web User-Facing  →  ahansk.com
+    // Web Public  →  ahansk.com
     // ─────────────────────────────────────────────────────────────
     {
       name:               'ahansk-web',
@@ -47,6 +48,22 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production',
         PORT: webEnv.PORT || 10312,
+      },
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // User Hub (App)  →  app.ahansk.com
+    // ─────────────────────────────────────────────────────────────
+    {
+      name:               'ahansk-app',
+      cwd:                './apps/app',
+      script:             'node_modules/next/dist/bin/next',
+      args:               'start',
+      interpreter:        'node',
+      max_memory_restart: '512M',
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: appEnv.PORT || 10314,
       },
     },
 

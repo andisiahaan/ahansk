@@ -12,3 +12,5 @@ export const localeRegistry = { en } as const;
 
 export type SupportedLocale = keyof typeof localeRegistry;
 export type LocaleData = (typeof localeRegistry)[SupportedLocale];
+
+export * from './languages';

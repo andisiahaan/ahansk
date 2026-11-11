@@ -2,30 +2,34 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '@/i18n/request';
 
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
-
-const DASHBOARD_PATH = process.env.NEXT_PUBLIC_DASHBOARD_PATH ?? '/dashboard';
+const LEGACY_AUTH_ROUTES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+];
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const accessToken = req.cookies.get('access_token')?.value;
-  const refreshToken = req.cookies.get('refresh_token')?.value;
-  const hasSession = Boolean(accessToken || refreshToken);
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:10314').replace(/\/+$/, '');
 
-  const isPublic   = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  const isDashboard = pathname === DASHBOARD_PATH || pathname.startsWith(DASHBOARD_PATH + '/');
-
-  // Protect dashboard routes — redirect unauthenticated users to login
-  if (isDashboard && !hasSession) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
+  // Redirect legacy auth routes to apps/app
+  for (const route of LEGACY_AUTH_ROUTES) {
+    if (pathname === route || pathname.startsWith(route + '/')) {
+      const targetSubPath = pathname.replace(/^\//, '');
+      const url = new URL(`${appUrl}/auth/${targetSubPath}`);
+      req.nextUrl.searchParams.forEach((val, key) => url.searchParams.set(key, val));
+      return NextResponse.redirect(url);
+    }
   }
 
-  // Redirect logged-in users away from auth pages
-  if (isPublic && hasSession && ['/login', '/register'].includes(pathname)) {
-    return NextResponse.redirect(new URL(DASHBOARD_PATH, req.url));
+  // Redirect legacy dashboard routes to apps/app
+  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    const subPath = pathname.replace(/^\/dashboard/, '');
+    const url = new URL(`${appUrl}${subPath || '/'}`);
+    req.nextUrl.searchParams.forEach((val, key) => url.searchParams.set(key, val));
+    return NextResponse.redirect(url);
   }
 
   // ─── Set locale cookie if missing ──────────────────────────────────────────

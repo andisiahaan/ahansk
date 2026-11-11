@@ -40,6 +40,7 @@ export const envSchema = z.object({
 
   // ─── CORS ─────────────────────────────────────────────────────────────────
   FRONTEND_URL: z.string().url(),
+  APP_URL: optionalUrl(),
   ADMIN_URL: z.string().url(),
 
   // ─── Email (SMTP) ─────────────────────────────────────────────────────────

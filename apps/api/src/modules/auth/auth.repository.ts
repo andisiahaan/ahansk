@@ -284,4 +284,14 @@ export class AuthRepository {
       }),
     ]);
   }
+
+  async updateUserEmail(
+    userId: number | bigint,
+    newEmail: string,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: BigInt(userId) },
+      data: { email: newEmail },
+    });
+  }
 }

@@ -52,16 +52,20 @@ describe('CaptchaService', () => {
     });
 
     it('should throw BadRequestException if token is missing', async () => {
-      await expect(service.verify(undefined)).rejects.toThrow(BadRequestException);
+      await expect(service.verify(undefined)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it('should call Cloudflare Turnstile endpoint and pass when successful', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
-        json: async () => ({ success: true }),
+        json: () => Promise.resolve({ success: true }),
       });
 
-      await expect(service.verify('sample-token', '127.0.0.1')).resolves.toBeUndefined();
+      await expect(
+        service.verify('sample-token', '127.0.0.1'),
+      ).resolves.toBeUndefined();
       expect(global.fetch).toHaveBeenCalledWith(
         'https://challenges.cloudflare.com/turnstile/v0/siteverify',
         expect.objectContaining({
@@ -72,10 +76,16 @@ describe('CaptchaService', () => {
 
     it('should throw BadRequestException when Turnstile verification fails', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
-        json: async () => ({ success: false, 'error-codes': ['invalid-input-response'] }),
+        json: () =>
+          Promise.resolve({
+            success: false,
+            'error-codes': ['invalid-input-response'],
+          }),
       });
 
-      await expect(service.verify('invalid-token')).rejects.toThrow(BadRequestException);
+      await expect(service.verify('invalid-token')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -98,23 +108,26 @@ describe('CaptchaService', () => {
 
     it('should call Google reCAPTCHA endpoint and pass when successful', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
-        json: async () => ({ success: true }),
+        json: () => Promise.resolve({ success: true }),
       });
 
       await expect(service.verify('sample-token')).resolves.toBeUndefined();
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('https://www.google.com/recaptcha/api/siteverify'),
+        expect.stringContaining(
+          'https://www.google.com/recaptcha/api/siteverify',
+        ),
         expect.objectContaining({ method: 'POST' }),
       );
     });
 
     it('should throw BadRequestException when Google verification fails', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
-        json: async () => ({ success: false }),
+        json: () => Promise.resolve({ success: false }),
       });
 
-      await expect(service.verify('invalid-token')).rejects.toThrow(BadRequestException);
+      await expect(service.verify('invalid-token')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });
-

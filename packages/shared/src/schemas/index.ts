@@ -145,7 +145,12 @@ export type UpdateSettingDto = z.infer<typeof UpdateSettingSchema>;
 
 // ─── OTP ──────────────────────────────────────────────────────────────────────
 export const OTP_PURPOSES = [
-  'email_change', 'phone_change', 'action_confirm', 'withdrawal',
+  'email_change',
+  'email_change_current',
+  'email_change_new',
+  'phone_change',
+  'action_confirm',
+  'withdrawal',
 ] as const;
 export type OTP_PURPOSE = (typeof OTP_PURPOSES)[number];
 
@@ -154,7 +159,35 @@ export const SendOtpSchema = z.object({
 });
 export type SendOtpDto = z.infer<typeof SendOtpSchema>;
 
-// ─── Email Change ──────────────────────────────────────────────────────────────
+// ─── Email Change (4-Step Secure Flow) ─────────────────────────────────────────
+// Step 1: Input current password -> send OTP to current email
+export const RequestCurrentEmailOtpSchema = z.object({
+  password: z.string().min(1, 'Password is required'),
+});
+export type RequestCurrentEmailOtpDto = z.infer<typeof RequestCurrentEmailOtpSchema>;
+
+// Step 2: Verify OTP from current email -> returns session ticket
+export const VerifyCurrentEmailOtpSchema = z.object({
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+export type VerifyCurrentEmailOtpDto = z.infer<typeof VerifyCurrentEmailOtpSchema>;
+
+// Step 3: Input new email with ticket -> send OTP to new email
+export const RequestNewEmailOtpSchema = z.object({
+  ticket: z.string().min(1, 'Ticket is required'),
+  new_email: z.string().email('Invalid email address'),
+});
+export type RequestNewEmailOtpDto = z.infer<typeof RequestNewEmailOtpSchema>;
+
+// Step 4: Verify OTP from new email -> finalize email change
+export const ConfirmEmailChangeSchema = z.object({
+  ticket: z.string().min(1, 'Ticket is required'),
+  new_email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+export type ConfirmEmailChangeDto = z.infer<typeof ConfirmEmailChangeSchema>;
+
+// Legacy compatibility
 export const RequestEmailChangeSchema = z.object({
   new_email: z.string().email(),
   password:  z.string().min(1),

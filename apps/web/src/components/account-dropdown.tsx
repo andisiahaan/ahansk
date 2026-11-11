@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Settings, Shield, LogOut, ChevronDown, User } from 'lucide-react';
+import { Settings, Shield, LogOut, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 
 import { cn } from '@/lib/cn';

@@ -70,6 +70,11 @@ const { modules, admin } = localeRegistry[locale];
 
 - Menambah namespace baru: tambah JSON di `shared/src/locales/en/admin/`, import di `en/index.ts`, wiring di `request.ts`.
 
+## Language & Theme Controls (Berdampingan)
+
+- Seluruh layout admin (`AdminShell` topbar) dan halaman login admin (`/auth/login` pojok kanan atas) **wajib memiliki `LanguageSwitcher` dan `ThemeToggle` yang saling berdampingan**.
+- Pilihan bahasa disimpan ke cookie `locale`, pilihan tema disimpan ke cookie `theme` (1 tahun) dan `localStorage` — **tanpa menyimpan ke DB**.
+
 ## TypeScript
 
 - **Dilarang `any`** — gunakan `unknown` + type narrowing.

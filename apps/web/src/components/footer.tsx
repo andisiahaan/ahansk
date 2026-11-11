@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { Logo } from '@ahansk/ui';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 
 export function Footer() {
   return (
@@ -21,6 +23,11 @@ export function Footer() {
                 Privacy Policy
               </Link>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
           </div>
         </div>
       </div>

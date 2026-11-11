@@ -3,7 +3,7 @@ trigger: always_on
 description: Panduan umum project ahansk — konteks, stack, prinsip kerja, dan aturan universal
 ---
 
-> **INSTRUKSI AGENT**: Setiap kali ada kesepakatan baru, keputusan arsitektur, pola baru, atau standar baru yang disepakati bersama user — **wajib langsung dicatat di file guide yang sesuai** sebelum melanjutkan pekerjaan lain. Jika keputusan bersifat lintas-app (universal), catat di `project-guide.md`. Jika spesifik ke satu app atau layer, catat di guide yang relevan (`backend-app-guide.md`, `frontend-app-guide.md`, atau `admin-app-guide.md`).
+> **INSTRUKSI AGENT**: Setiap kali ada kesepakatan baru, keputusan arsitektur, pola baru, atau standar baru yang disepakati bersama user — **wajib langsung dicatat di file guide yang sesuai** sebelum melanjutkan pekerjaan lain. Jika keputusan bersifat lintas-app (universal), catat di `project-guide.md`. Jika spesifik ke satu app atau layer, catat di guide yang relevan (`backend-app-guide.md`, `frontend-app-guide.md`, `app-guide.md`, atau `admin-app-guide.md`).
 
 # Project Guide — ahansk Starter Kit
 
@@ -23,9 +23,10 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 
 | Layer | Pilihan |
 |---|---|
-| Backend (API) | NestJS (`apps/api`) |
-| Frontend (Web) | Next.js App Router (`apps/web`) |
-| Admin | Next.js App Router (`apps/admin`) |
+| Backend (API) | NestJS (`apps/api`, port 10311) |
+| Public Web | Next.js App Router (`apps/web`, port 10312) — Public portal & landing |
+| User Hub (App) | Next.js App Router (`apps/app`, port 10314) — Auth pages & authenticated dashboard |
+| Admin | Next.js App Router (`apps/admin`, port 10313) — Management panel |
 | ORM | Prisma (MySQL/MariaDB) |
 | Package manager | pnpm workspaces |
 | Task orchestrator | Turborepo (Full Monorepo) |
@@ -40,7 +41,8 @@ Ini adalah **starter kit monorepo untuk project skala menengah ke atas**. Kerumi
 ```
 apps/
   api/        → NestJS (port 10311)
-  web/        → Next.js user-facing (port 10312)
+  web/        → Next.js public web (port 10312)
+  app/        → Next.js authenticated hub & dashboard (port 10314)
   admin/      → Next.js admin panel (port 10313)
 packages/
   shared/     → Zod schemas, types, constants, i18n localeRegistry, pagination utils
@@ -57,7 +59,7 @@ packages/
 
 - PM2 via `ecosystem.config.js` di root monorepo.
 - API (Backend) production: cluster mode.
-- Web & Admin production: `script: 'node_modules/.bin/next'`, `args: 'start'`.
+- Web, App & Admin production: `script: 'node_modules/next/dist/bin/next'`, `args: 'start'`.
 
 ## Hal yang SELALU DILARANG (lintas semua app)
 

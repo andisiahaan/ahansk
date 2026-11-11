@@ -7,4 +7,3 @@ import { CaptchaService } from './captcha.service';
   exports: [CaptchaService],
 })
 export class CaptchaModule {}
-

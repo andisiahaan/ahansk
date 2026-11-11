@@ -47,8 +47,12 @@ export class EmailProcessor extends WorkerHost {
     name: string,
     token: string,
   ): Promise<void> {
+    const appUrl = this.config.get<string>('app.cors.appUrl');
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
-    const link = `${frontendUrl}/verify-email?token=${token}`;
+    const baseUrl = (appUrl || frontendUrl || '').replace(/\/+$/, '');
+    const link = appUrl
+      ? `${baseUrl}/auth/verify-email?token=${token}`
+      : `${baseUrl}/verify-email?token=${token}`;
     await this.transporter.sendMail({
       from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
@@ -62,8 +66,12 @@ export class EmailProcessor extends WorkerHost {
     name: string,
     token: string,
   ): Promise<void> {
+    const appUrl = this.config.get<string>('app.cors.appUrl');
     const frontendUrl = this.config.get<string>('app.cors.frontendUrl');
-    const link = `${frontendUrl}/reset-password?token=${token}`;
+    const baseUrl = (appUrl || frontendUrl || '').replace(/\/+$/, '');
+    const link = appUrl
+      ? `${baseUrl}/auth/reset-password?token=${token}`
+      : `${baseUrl}/reset-password?token=${token}`;
     await this.transporter.sendMail({
       from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
@@ -78,11 +86,21 @@ export class EmailProcessor extends WorkerHost {
     code: string,
     purpose: string,
   ): Promise<void> {
+    const purposeLabels: Record<string, string> = {
+      email_change_current: 'Current Email Verification',
+      email_change_new: 'New Email Verification',
+      email_change: 'Email Change Verification',
+      phone_change: 'Phone Change Verification',
+      action_confirm: 'Action Confirmation',
+      withdrawal: 'Withdrawal Confirmation',
+    };
+    const label = purposeLabels[purpose] ?? purpose;
+
     await this.transporter.sendMail({
       from: `"${this.config.get<string>('app.smtp.fromName')}" <${this.config.get<string>('app.smtp.fromAddress')}>`,
       to,
-      subject: `Your OTP Code for ${purpose}`,
-      html: `<p>Hello ${name},</p><p>Your one-time verification code for <strong>${purpose}</strong> is:</p><h2 style="letter-spacing: 4px;">${code}</h2><p>This code expires in 10 minutes. Do not share this code with anyone.</p>`,
+      subject: `Your OTP Code for ${label}`,
+      html: `<p>Hello ${name},</p><p>Your one-time verification code for <strong>${label}</strong> is:</p><h2 style="letter-spacing: 4px;">${code}</h2><p>This code expires in 15 minutes. Do not share this code with anyone.</p>`,
     });
   }
 }

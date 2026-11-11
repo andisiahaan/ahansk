@@ -82,6 +82,14 @@ Error handling lewat **Exception Filter global** (`http-exception.filter.ts`).
 - Frontend/Admin **tidak boleh simpan token di localStorage**.
 - **CSRF Protection**: Semua request yang merubah state (POST, PUT, PATCH, DELETE) **wajib** menyertakan header `X-CSRF-Token` yang nilainya sama dengan cookie `csrf_token` (Double-Submit Cookie). Pengecekan CSRF dikecualikan khusus untuk endpoint `/auth/refresh`.
 
+## Alur Keamanan Change Email (4-Step Verification)
+
+Dilarang keras mengizinkan perubahan email hanya dengan verifikasi password! Wajib alur 4 langkah berjenjang:
+1. `POST /auth/email-change/request-current-otp` ({ password }): Validasi password saat ini via Argon2 -> Kirim OTP 6-digit ke **email lama**.
+2. `POST /auth/email-change/verify-current-otp` ({ otp }): Verifikasi OTP email lama -> Terbitkan tiket acak 32-byte hex yang disimpan di Redis Cache (`email_change_ticket:<ticket>`, TTL 15 menit).
+3. `POST /auth/email-change/request-new-otp` ({ ticket, new_email }): Validasi tiket -> Pastikan email baru belum digunakan & berbeda dari email lama -> Kirim OTP 6-digit ke **email baru**.
+4. `POST /auth/email-change/confirm` ({ ticket, new_email, otp }): Validasi tiket & OTP email baru -> Update `user.email` di DB -> Hapus tiket -> Kirim notifikasi keamanan.
+
 ## Caching
 
 - Redis DB 1 (`REDIS_CACHE_DB`, default: 1), `CacheService` di `infrastructure/cache/`. Namespace `cache:`.

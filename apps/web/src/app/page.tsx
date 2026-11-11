@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Logo } from '@ahansk/ui';
 import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ExternalLink, ShieldCheck, Zap, LayoutDashboard, Globe2 } from 'lucide-react';
+import { PublicNavbar } from '@/components/public-navbar';
 import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = { title: 'Home - Ahansk Starter Kit' };
@@ -31,41 +31,16 @@ const features = [
 ];
 
 export default function HomePage() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:10314';
+
   return (
     <main className="relative min-h-screen bg-background text-foreground overflow-hidden selection:bg-primary/30">
       {/* Background glowing effects */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Header / Nav */}
-      <header className="absolute top-0 w-full z-50">
-        <div className="mx-auto max-w-6xl p-6 flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <Logo width={140} height={36} className="text-foreground" />
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Features
-              </a>
-              <Link href="/pages/terms" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Terms
-              </Link>
-              <Link href="/pages/privacy" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Privacy
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Sign In
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="rounded-full font-semibold shadow-md hover:shadow-primary/25 transition-all">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Navigation */}
+      <PublicNavbar />
 
       {/* Hero Section */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-[75vh] px-4 text-center pt-24">
@@ -93,12 +68,12 @@ export default function HomePage() {
               <ExternalLink className="w-4 h-4" />
             </Button>
           </Link>
-          <Link href="/register" className="w-full sm:w-auto">
+          <a href={`${appUrl}/auth/register`} className="w-full sm:w-auto">
             <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-full font-semibold bg-background/50 backdrop-blur-md border-border hover:bg-muted transition-all duration-300 gap-2">
               Start Building
               <ArrowRight className="w-4 h-4" />
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 

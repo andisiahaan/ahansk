@@ -20,11 +20,18 @@ export default registerAs('app', () => {
     },
     google: { clientId: env.GOOGLE_CLIENT_ID },
     captcha: {
-      provider: (env.CAPTCHA_PROVIDER || (env.RECAPTCHA_SECRET_KEY ? 'google' : '')) as 'google' | 'turnstile' | '',
+      provider:
+        env.CAPTCHA_PROVIDER || (env.RECAPTCHA_SECRET_KEY ? 'google' : ''),
       secretKey: env.CAPTCHA_SECRET_KEY || env.RECAPTCHA_SECRET_KEY || '',
     },
-    recaptcha: { secretKey: env.CAPTCHA_SECRET_KEY || env.RECAPTCHA_SECRET_KEY || '' },
-    cors: { frontendUrl: env.FRONTEND_URL, adminUrl: env.ADMIN_URL },
+    recaptcha: {
+      secretKey: env.CAPTCHA_SECRET_KEY || env.RECAPTCHA_SECRET_KEY || '',
+    },
+    cors: {
+      frontendUrl: env.FRONTEND_URL,
+      appUrl: env.APP_URL,
+      adminUrl: env.ADMIN_URL,
+    },
     smtp: {
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,

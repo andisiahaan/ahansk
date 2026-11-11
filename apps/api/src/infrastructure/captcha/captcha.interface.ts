@@ -8,4 +8,3 @@ export interface CaptchaVerifyResponse {
   hostname?: string;
   'error-codes'?: string[];
 }
-

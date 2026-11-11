@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { CaptchaWidget } from '@/components/ui/captcha-widget';
 import { useRecaptcha } from '@/lib/use-recaptcha';
 
@@ -191,7 +192,8 @@ export default function AdminLoginPage() {
       <div className="pointer-events-none absolute -top-40 -left-40 size-96 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 size-96 rounded-full bg-primary/10 blur-3xl" />
 
-      <div className="absolute top-5 right-5">
+      <div className="absolute top-5 right-5 flex items-center gap-2">
+        <LanguageSwitcher />
         <ThemeToggle />
       </div>
 

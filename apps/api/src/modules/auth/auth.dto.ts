@@ -10,6 +10,10 @@ import {
   VerifyTotpSchema,
   RequestEmailChangeSchema,
   VerifyEmailChangeOtpSchema,
+  RequestCurrentEmailOtpSchema,
+  VerifyCurrentEmailOtpSchema,
+  RequestNewEmailOtpSchema,
+  ConfirmEmailChangeSchema,
 } from '@ahansk/shared';
 
 export class RegisterDto extends createZodDto(RegisterSchema) {}
@@ -25,4 +29,16 @@ export class RequestEmailChangeDto extends createZodDto(
 ) {}
 export class VerifyEmailChangeOtpDto extends createZodDto(
   VerifyEmailChangeOtpSchema,
+) {}
+export class RequestCurrentEmailOtpDto extends createZodDto(
+  RequestCurrentEmailOtpSchema,
+) {}
+export class VerifyCurrentEmailOtpDto extends createZodDto(
+  VerifyCurrentEmailOtpSchema,
+) {}
+export class RequestNewEmailOtpDto extends createZodDto(
+  RequestNewEmailOtpSchema,
+) {}
+export class ConfirmEmailChangeDto extends createZodDto(
+  ConfirmEmailChangeSchema,
 ) {}

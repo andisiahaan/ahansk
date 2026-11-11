@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/sidebar';
 import { useAdminAuthStore } from '@/stores/auth.store';
 import { AccountDropdown } from '@/components/account-dropdown';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 
 const PUBLIC_PATHS = ['/auth'];
 
@@ -127,6 +128,7 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
               <span>{t('api_online')}</span>
             </div>
 
+            <LanguageSwitcher />
             <ThemeToggle />
             <AccountDropdown />
           </div>

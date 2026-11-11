@@ -1,7 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { messages } from '@ahansk/shared';
-import type { CaptchaProvider, CaptchaVerifyResponse } from './captcha.interface';
+import type {
+  CaptchaProvider,
+  CaptchaVerifyResponse,
+} from './captcha.interface';
 
 @Injectable()
 export class CaptchaService {
@@ -32,7 +35,12 @@ export class CaptchaService {
   async verify(token: string | undefined, remoteIp?: string): Promise<void> {
     if (!this.isEnabled) return;
 
-    if (!token || typeof token !== 'string' || token.length === 0 || token.length > 2048) {
+    if (
+      !token ||
+      typeof token !== 'string' ||
+      token.length === 0 ||
+      token.length > 2048
+    ) {
       throw new BadRequestException(
         messages.common.captchaInvalid ?? messages.common.recaptchaInvalid,
       );
@@ -45,7 +53,10 @@ export class CaptchaService {
     }
   }
 
-  private async verifyTurnstile(token: string, remoteIp?: string): Promise<void> {
+  private async verifyTurnstile(
+    token: string,
+    remoteIp?: string,
+  ): Promise<void> {
     const params = new URLSearchParams({
       secret: this.secretKey,
       response: token,
@@ -55,14 +66,17 @@ export class CaptchaService {
     }
 
     try {
-      const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+      const res = await fetch(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          signal: AbortSignal.timeout(10_000),
+          body: params.toString(),
         },
-        signal: AbortSignal.timeout(10_000),
-        body: params.toString(),
-      });
+      );
 
       const data = (await res.json()) as CaptchaVerifyResponse;
       if (!data.success) {
@@ -107,4 +121,3 @@ export class CaptchaService {
     }
   }
 }
-

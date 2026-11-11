@@ -82,11 +82,14 @@ async function bootstrap(): Promise<void> {
   });
 
   // ─── CORS ───────────────────────────────────────────────────────────────────
+  const allowedOrigins = [
+    process.env.FRONTEND_URL ?? 'http://localhost:10312',
+    process.env.APP_URL ?? 'http://localhost:10314',
+    process.env.ADMIN_URL ?? 'http://localhost:10313',
+  ];
+
   app.enableCors({
-    origin: [
-      process.env.FRONTEND_URL ?? 'http://localhost:10312',
-      process.env.ADMIN_URL ?? 'http://localhost:10313',
-    ],
+    origin: allowedOrigins,
     credentials: true,
   });
 

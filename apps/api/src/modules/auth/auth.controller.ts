@@ -30,6 +30,10 @@ import {
   VerifyTotpDto,
   RequestEmailChangeDto,
   VerifyEmailChangeOtpDto,
+  RequestCurrentEmailOtpDto,
+  VerifyCurrentEmailOtpDto,
+  RequestNewEmailOtpDto,
+  ConfirmEmailChangeDto,
 } from './auth.dto';
 
 @Controller('auth')
@@ -159,6 +163,42 @@ export class AuthController {
   ) {
     return this.totpService.disableTotp(user.id, dto);
   }
+
+  // ─── 4-Step Secure Email Change ──────────────────────────────────────────
+
+  @Post('email-change/request-current-otp')
+  async requestCurrentEmailOtp(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RequestCurrentEmailOtpDto,
+  ) {
+    return this.authService.requestCurrentEmailOtp(user.id, dto);
+  }
+
+  @Post('email-change/verify-current-otp')
+  async verifyCurrentEmailOtp(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: VerifyCurrentEmailOtpDto,
+  ) {
+    return this.authService.verifyCurrentEmailOtp(user.id, dto);
+  }
+
+  @Post('email-change/request-new-otp')
+  async requestNewEmailOtp(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RequestNewEmailOtpDto,
+  ) {
+    return this.authService.requestNewEmailOtp(user.id, dto);
+  }
+
+  @Post('email-change/confirm')
+  async confirmEmailChange(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ConfirmEmailChangeDto,
+  ) {
+    return this.authService.confirmEmailChange(user.id, dto);
+  }
+
+  // ─── Legacy Email Change (Fallback) ───────────────────────────────────────
 
   @Post('email-change/request')
   async requestEmailChange(
